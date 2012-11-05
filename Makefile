@@ -134,7 +134,8 @@ clean:
 		-@rm -f follower/randTest.out
 		-@rm -f follower/fort.*
 		-@rm -f follower/RHRAND.o
-
+		-@rm -f testcases/BGAOL_tests*_cur
+		-@rm -f testcases/bgaol_tests.diff
 #
 bgaol.html:	bgaol.html.m4 Makefile $(MATHSCRIBEPATH)
 		m4 -d $(HTFLAGS) < bgaol.html.m4 > bgaol.html
@@ -161,7 +162,7 @@ install:	edit_done bgaol bgaol.csh bgaol.html \
 		cp -r $(MATHSCRIBEPATH) $(HTDOCS)/$(MATHSCRIBEPATH)
 
 #		
-bgaol.o:	bgaol.f MKGAOL.FOR MKREFL.FOR E3TOG6.FOR near6.for NEAR.cmn
+bgaol.o:	bgaol.f MKGAOL.FOR MKREFL.FOR E3TOG6.FOR near6.for NEAR.FOR
 bgaol:		bgaol.o 
 		$(FC) $(FFLAGS) -o bgaol bgaol.o
 	
@@ -181,10 +182,60 @@ follower/randTest.diff:	follower/randTest follower/randTest_orig.out
 		(cd follower; ./randTest > randTest.out; diff -bu randTest.out randTest_orig.out > randTest.diff)
 
 follower/F_Summary.diff: follower/Follower follower/F_Summary_orig.txt
-		echo "Follower run started, please be patient"
+		@/bin/echo "Follower run started, please be patient"
 		(cd follower; ./Follower >Follower.out; diff -bu F_Summary.txt F_Summary_orig.txt > F_Summary.diff)
 
-tests:		follower/randTest.diff follower/F_Summary.diff follower/F_Step_orig.txt follower/Follower_orig.out
+testcases/bgaol_tests.diff: bgaol
+		@/bin/echo "testall.csh started, please be patient"
+		(cd testcases; /bin/csh ../testall.csh)
+
+
+tests:		follower/randTest.diff follower/F_Summary.diff follower/F_Step_orig.txt follower/Follower_orig.out \
+		testcases/BGAOL-cF.in \
+		testcases/bgaol_tests_orig \
+		testcases/case01.in \
+		testcases/case02.in \
+		testcases/case03.in \
+		testcases/case04.in \
+		testcases/case05.in \
+		testcases/case06.in \
+		testcases/case07.in \
+		testcases/case08.in \
+		testcases/case09.in \
+		testcases/case10.in \
+		testcases/case11.in \
+		testcases/case12.in \
+		testcases/case13.in \
+		testcases/case14.in \
+		testcases/case15.in \
+		testcases/case16.in \
+		testcases/case17.in \
+		testcases/case18.in \
+		testcases/case19.in \
+		testcases/case20.in \
+		testcases/case21.in \
+		testcases/case22.in \
+		testcases/case23.in \
+		testcases/case24.in \
+		testcases/case25.in \
+		testcases/case26.in \
+		testcases/case27.in \
+		testcases/case28.in \
+		testcases/case29.in \
+		testcases/case30.in \
+		testcases/case32.in \
+		testcases/case33.in \
+		testcases/case34.in \
+		testcases/case35.in \
+		testcases/case36.in \
+		testcases/case37.in \
+		testcases/case38.in \
+		testcases/case39.in \
+		testcases/case40.in \
+		testcases/case41.in \
+		testcases/case42.in \
+		testcases/case43.in \
+		testcases/bgaol_tests.diff
 		(cd follower; cat randTest.diff)
 		(cd follower; cat F_Summary.diff; diff -bu F_Step.txt F_Step_orig.txt | head -50)
 		-(cd follower; diff -bu Follower.out Follower_orig.out | head -50 | tail +9)
