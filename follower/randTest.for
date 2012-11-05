@@ -1,4 +1,3 @@
-      include "rhrand.cmn"
       
       program randtester
       implicit none

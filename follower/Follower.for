@@ -4,10 +4,9 @@ C   and the environment is very complicated.
 
       include "BasicReduction.For"
       include "MKREFL.FOR"
-      include "../NEAR.cmn"
+      include "../NEAR.FOR"
       include "../E3TOG6.FOR"
       include "../MKGAOL.FOR"
-      include "RHRAND.cmn"
 
 C**********************************************************************C
       program Follower

@@ -5,6 +5,7 @@
 #  Lawrence C. Andrews, Micro Encoder Inc.
 #
 #  1 July 2012
+#  Rev 5 November 2012
 #
 #  Modify the following definitions for your system
 #
@@ -45,7 +46,8 @@ HTDOCSEXT   ?=   /bgaol
 #
 #  Default compile flag definition to select debug mode under unix
 #FFLAGS	=	-g
-FFLAGS	?=	-O
+FFLAGS	?=	-O3
+FC	?=	gfortran
 #
 #  For IBM AIX xlf compilation with full optimization try this
 #FFLAGS	=	-O3 -qstrict
@@ -69,7 +71,7 @@ MATHSCRIBEURL = http://$(HTTPDSERVER)$(HTDOCSEXT)/$(MATHSCRIBEPATH)
 #
 # BGAOL URLS
 #
-BGAOLVERSION = 1.0.2
+BGAOLVERSION = 1.1
 BGAOLTARBALLURL = http://downloads.sf.net/iterate/bgaol-$(BGAOLVERSION).tar.gz
 BGAOLZIPURL = http://downloads.sf.net/iterate/bgaol-$(BGAOLVERSION).zip
 
@@ -112,12 +114,26 @@ edit_done:	bgaol bgaol.html bgaol.csh
 		touch edit
 #
 clean:
-		-rm edit
-		-rm bgaol.html
-		-rm bgaol
-		-rm bgaol.o
-		-rm bgaol.csh
-		-rm *.bak
+		-@rm -f edit
+		-@rm -f bgaol.html
+		-@rm -f bgaol
+		-@rm -f *.o
+		-@rm -f bgaol.csh
+		-@rm -f *.bak
+		-@rm -f follower/*,o
+		-@rm -f follower/Follower
+		-@rm -f follower/F_LargeNCDIST.txt
+		-@rm -f follower/F_Summary.diff
+		-@rm -f follower/F_Summary.txt
+		-@rm -f follower/F_Step.txt
+		-@rm -f follower/F_Step_\&_NCDIST.txt
+		-@rm -f follower/Follower.diff
+		-@rm -f follower/Follower.out
+		-@rm -f follower/randTest
+		-@rm -f follower/randTest.diff
+		-@rm -f follower/randTest.out
+		-@rm -f follower/fort.*
+		-@rm -f follower/RHRAND.o
 
 #
 bgaol.html:	bgaol.html.m4 Makefile $(MATHSCRIBEPATH)
@@ -137,6 +153,7 @@ install:	edit_done bgaol bgaol.csh bgaol.html \
 		chmod 755 bgaol
 		chmod 755 bgaol.csh
 		cp bgaol $(BINDEST)
+		cp follower $(BINDEST)
 		cp bgaol.csh $(CGIBIN)
 		chmod 755 $(CGIBIN)/bgaol.csh
 		cp bgaol.html $(HTDOCS)
@@ -151,6 +168,26 @@ bgaol:		bgaol.o
 bgaol.f:    BGAOL.FOR
 		ln -s -f BGAOL.FOR bgaol.f
 
+follower/RHRAND.o:	follower/RHRAND.for
+		(cd follower; $(FC) -ffloat-store $(FFLAGS) -c RHRAND.for)
+
+follower/Follower:	follower/Follower.for follower/RHRAND.o follower/MKREFL.FOR NEAR.FOR E3TOG6.FOR MKGAOL.FOR
+		(cd follower; $(FC) $(FFLAGS) -o Follower Follower.for RHRAND.o)
+
+follower/randTest:	follower/randTest.for follower/RHRAND.o
+		(cd follower; $(FC) $(FFLAGS) -o randTest randTest.for RHRAND.o)
+
+follower/randTest.diff:	follower/randTest follower/randTest_orig.out
+		(cd follower; ./randTest > randTest.out; diff -bu randTest.out randTest_orig.out > randTest.diff)
+
+follower/F_Summary.diff: follower/Follower follower/F_Summary_orig.txt
+		echo "Follower run started, please be patient"
+		(cd follower; ./Follower >Follower.out; diff -bu F_Summary.txt F_Summary_orig.txt > F_Summary.diff)
+
+tests:		follower/randTest.diff follower/F_Summary.diff follower/F_Step_orig.txt follower/Follower_orig.out
+		(cd follower; cat randTest.diff)
+		(cd follower; cat F_Summary.diff; diff -bu F_Step.txt F_Step_orig.txt | head -50)
+		-(cd follower; diff -bu Follower.out Follower_orig.out | head -50 | tail +9)
 
 $(MATHSCRIBETARBALL):
 		wget http://downloads.sf.net/iterate/$(MATHSCRIBETARBALL)

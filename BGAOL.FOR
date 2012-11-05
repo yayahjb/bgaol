@@ -148,7 +148,7 @@ C
       include "near6.for"
       include "E3TOG6.FOR"
       include "MKGAOL.FOR"
-      include "NEAR.cmn"
+      include "NEAR.FOR"
 
 C**********************************************************************C
       PROGRAM RED
