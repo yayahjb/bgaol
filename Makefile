@@ -146,7 +146,7 @@ bgaol.csh:	bgaol.csh.m4 Makefile
 		-DSEARCHURL=$(SEARCHURL)\
 		< bgaol.csh.m4 > bgaol.csh
 #
-install:	edit_done bgaol bgaol.csh bgaol.html \
+install:	edit_done bgaol bgaol.csh follower/Follower bgaol.html \
 		$(MATHSCRIBEPATH)
 		-mkdir -p $(BINDEST)
 		-mkdir -p $(CGIBIN)
@@ -154,7 +154,8 @@ install:	edit_done bgaol bgaol.csh bgaol.html \
 		chmod 755 bgaol
 		chmod 755 bgaol.csh
 		cp bgaol $(BINDEST)
-		cp follower $(BINDEST)
+		chmod 755 follower/Follower
+		cp follower/Follower $(BINDEST)
 		cp bgaol.csh $(CGIBIN)
 		chmod 755 $(CGIBIN)/bgaol.csh
 		cp bgaol.html $(HTDOCS)
@@ -183,7 +184,7 @@ follower/randTest.diff:	follower/randTest follower/randTest_orig.out
 
 follower/F_Summary.diff: follower/Follower follower/F_Summary_orig.txt
 		@/bin/echo "Follower run started, please be patient"
-		(cd follower; ./Follower >Follower.out; diff -bu F_Summary.txt F_Summary_orig.txt > F_Summary.diff)
+		-(cd follower; ./Follower >Follower.out; diff -bu F_Summary.txt F_Summary_orig.txt > F_Summary.diff)
 
 testcases/bgaol_tests.diff: bgaol
 		@/bin/echo "testall.csh started, please be patient"

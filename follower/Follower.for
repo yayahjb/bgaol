@@ -2,7 +2,7 @@ C   program to investigate the environment around the 8-fold
 C   corner in Niggli space. This is cF (face-center cubic),
 C   and the environment is very complicated.
 
-      include "BasicReduction.For"
+      include "BasicReduction.FOR"
       include "MKREFL.FOR"
       include "../NEAR.FOR"
       include "../E3TOG6.FOR"
