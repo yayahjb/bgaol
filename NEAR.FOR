@@ -1,12 +1,12 @@
-
 C**********************************************************************C
       SUBROUTINE BLDTRE_N (debug,MXTREE,NVEC,X,IDIN,TREE,TEST)
       implicit none
 
       CHARACTER*8 TEST
       LOGICAL DEBUG
+      integer nvec
       REAL*8 X(NVEC)
-      integer mxtree, nvec, idin
+      integer mxtree, idin
       real*8 DL, DR
       real*8 TREE(MXTREE)
       real*8 TREELN_N

@@ -1316,10 +1316,10 @@ C
      *         v1(4)*v2(4)+v1(5)*v2(5),
      *         v1(4)*v2(4)+v1(6)*v2(6),
      *         v1(5)*v2(5)+v1(6)*v2(6)))
-       if (xdebug) then
-         write(7,'(a,1x,6f9.2,1x,6f9.2,1x,f12.4)')
-     *  'g456dist',v1,v2,g456dist
-       endif
+C       if (xdebug) then
+C         write(7,'(a,1x,6f9.2,1x,6f9.2,1x,f12.4)')
+C     *  'g456dist',v1,v2,g456dist
+C       endif
       end
 
 C
@@ -1339,50 +1339,50 @@ C
       integer ms(36,18)
       common /projectors/ prj,prjperp,prjhat,ms
 
-      if (xdebug) then
-        write(7,'(a,1x,6f9.2)') "NCDIST gv1 ",gv1
-        write(7,'(a,1x,6f9.2)') "NCDIST gv2 ",gv2
-      endif
+C      if (xdebug) then
+C        write(7,'(a,1x,6f9.2)') "NCDIST gv1 ",gv1
+C        write(7,'(a,1x,6f9.2)') "NCDIST gv2 ",gv2
+C      endif
       NCDIST=foldmdist(gv1,gv2,0,9.D38)
-      if (xdebug) then
-      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-     * NCDIST
-      endif
+C      if (xdebug) then
+C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
+C     * NCDIST
+C      endif
       NCDIST=foldmdist(gv1,gv2,7,NCDIST)
-      if (xdebug) then
-      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-     * NCDIST
-      endif
+C      if (xdebug) then
+C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
+C     * NCDIST
+C      endif
       NCDIST=foldmdist(gv1,gv2,10,NCDIST)
-      if (xdebug) then
-      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-     * NCDIST
-      endif
+C      if (xdebug) then
+C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
+C     * NCDIST
+C      endif
       NCDIST=foldmdist(gv1,gv2,13,NCDIST)
-      if (xdebug) then
-      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-     * NCDIST
-      endif
+C      if (xdebug) then
+C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
+C     * NCDIST
+C      endif
       NCDIST=foldmdist(gv1,gv2,15,NCDIST)
-      if (xdebug) then
-      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-     * NCDIST
-      endif
+C      if (xdebug) then
+C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
+C     * NCDIST
+C      endif
       NCDIST=foldmdist(gv1,gv2,23,NCDIST)
-      if (xdebug) then
-      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-     * NCDIST
-      endif
+C      if (xdebug) then
+C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
+C     * NCDIST
+C      endif
       NCDIST=foldmdist(gv1,gv2,24,NCDIST)
-      if (xdebug) then
-      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-     * NCDIST
-      endif
+C      if (xdebug) then
+C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
+C     * NCDIST
+C      endif
       NCDIST=foldmdist(gv1,gv2,25,NCDIST)
-      if (xdebug) then
-      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-     * NCDIST
-      endif
+C      if (xdebug) then
+C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
+C     * NCDIST
+C      endif
       end
 
 C     DistF -- distance to the F boundary
@@ -1399,7 +1399,7 @@ C     DistF -- distance to the F boundary
      *            dabs(x12-g(4)+g(5)-g(6)),
      *            dabs(x12-g(4)-g(5)+g(6)))
      *            /dsqrt(5.D0)
-       if (xdebug) write(7,*) "Distf ",DistF,g
+C       if (xdebug) write(7,*) "Distf ",DistF,g
       end
 
       logical function inncone(gvec)
@@ -1662,16 +1662,16 @@ C EF boundary
 
 
  1100 continue
-      if (xdebug) then
-        write(7,*) "FOLDMDIST ip ",
-     *  "h1, h2, h1m1, h2m1, h1m2, h2m2 ",
-     *  ip, h1, h2, h1m1, h2m1, h1m2, h2m2
-        write(7,*) "FOLDMDIST ip ",
-     *  "h1m1m2, h2m1m2, h1m2m1, ",
-     *  "h2m2m1, h1m2m1m2, h2m2m1m2 ",
-     *  ip, h1m1m2, h2m1m2, h1m2m1,
-     *  h2m2m1, h1m2m1m2, h2m2m1m2
-      end if
+C      if (xdebug) then
+C        write(7,*) "FOLDMDIST ip ",
+C     *  "h1, h2, h1m1, h2m1, h1m2, h2m2 ",
+C     *  ip, h1, h2, h1m1, h2m1, h1m2, h2m2
+C        write(7,*) "FOLDMDIST ip ",
+C     *  "h1m1m2, h2m1m2, h1m2m1, ",
+C     *  "h2m2m1, h1m2m1m2, h2m2m1m2 ",
+C     *  ip, h1m1m2, h2m1m2, h1m2m1,
+C     *  h2m2m1, h1m2m1m2, h2m2m1m2
+C      end if
 
       if (h1.lt.FOLDMDIST) then
       if (h1+h2.lt.FOLDMDIST)
@@ -1800,11 +1800,11 @@ C
       logical lfc1,lfc2
 
 
-      if (xdebug) then
-        write(7,*) "FOLDxDIST ip, CFOLDDIST: ",ip,CFOLDDIST
-        write(7,'(a,1x,6f9.2)') "FOLDXDIST gvec1: ",gvec1
-        write(7,'(a,1x,6f9.2)') "FOLDXDIST gvec2: ",gvec2
-      endif
+C      if (xdebug) then
+C        write(7,*) "FOLDxDIST ip, CFOLDDIST: ",ip,CFOLDDIST
+C        write(7,'(a,1x,6f9.2)') "FOLDXDIST gvec1: ",gvec1
+C        write(7,'(a,1x,6f9.2)') "FOLDXDIST gvec2: ",gvec2
+C      endif
 
       foldxdist = cfolddist
 
@@ -2120,21 +2120,21 @@ C     Process EF boundary
         FOLDxDIST = MIN(FOLDxDIST,
      *    DSQRT((ht1+ht2)**2 +
      *    dist12**2))
-        if (xdebug)
-     * write(7,'(a,1x,6f9.2)') "FOLDxDIST: ",FOLDxDIST
+C        if (xdebug)
+C     * write(7,'(a,1x,6f9.2)') "FOLDxDIST: ",FOLDxDIST
       endif
 
-      if (xdebug) then
-          write(7,'(a,1x,6f9.2,1x,l1)')
-     *      "FOLDxDIST pg1: ",pg1,inncone(pg1)
-          write(7,'(a,1x,6f9.2,1x,l1)')
-     *      "FOLDxDIST mpg1: ",mpg1,inncone(mpg1)
-          write(7,'(a,1x,6f9.2,1x,l1)')
-     *      "FOLDxDIST pg2: ",pg2,inncone(pg2)
-          write(7,'(a,1x,6f9.2,1x,l1)')
-     *      "FOLDxDIST mpg2: ",mpg2,inncone(mpg2)
-          write(7,'(a,1x,6f9.2)') "FOLDxDIST: ",FOLDxDIST
-      endif
+C      if (xdebug) then
+C          write(7,'(a,1x,6f9.2,1x,l1)')
+C     *      "FOLDxDIST pg1: ",pg1,inncone(pg1)
+C          write(7,'(a,1x,6f9.2,1x,l1)')
+C     *      "FOLDxDIST mpg1: ",mpg1,inncone(mpg1)
+C          write(7,'(a,1x,6f9.2,1x,l1)')
+C     *      "FOLDxDIST pg2: ",pg2,inncone(pg2)
+C          write(7,'(a,1x,6f9.2,1x,l1)')
+C     *      "FOLDxDIST mpg2: ",mpg2,inncone(mpg2)
+C          write(7,'(a,1x,6f9.2)') "FOLDxDIST: ",FOLDxDIST
+C      endif
         RETURN
       end
 
