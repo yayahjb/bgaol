@@ -2471,7 +2471,7 @@ C     TEST FOR G1, G2, G3 OUT OF BOUNDS OR WRONG ORDER
 C
       IF (GVEC(1) .LT. -DELTA
      *  .OR. GVEC(2) .LT. -DELTA
-     *  .OR. GVEC(2) .LT. -DELTA
+     *  .OR. GVEC(3) .LT. -DELTA
      *  .OR. GVEC(1) .GT. GVEC(2)+DELTA
      *  .OR. GVEC(2) .GT. GVEC(3)+DELTA) RETURN
 C
@@ -2575,7 +2575,7 @@ C     TEST FOR G1, G2, G3 OUT OF BOUNDS OR WRONG ORDER
 C
       IF (GVEC(1) .LT. -XDELTA
      *  .OR. GVEC(2) .LT. -XDELTA
-     *  .OR. GVEC(2) .LT. -XDELTA
+     *  .OR. GVEC(3) .LT. -XDELTA
      *  .OR. GVEC(1) .GT. GVEC(2)+XDELTA
      *  .OR. GVEC(2) .GT. GVEC(3)+XDELTA) THEN
          if (GVEC(1).LT.0.D0) VOUT(1) = 0.D0
