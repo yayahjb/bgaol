@@ -1241,6 +1241,222 @@ C       1, 2, 678, 9AB, CDE, F
      *  /2.D0
       END
 
+C    Map a G6 vector onto the boundaries after
+C    applying the 24-way unfolding
+
+      subroutine bdmaps(gvec,vecs, dists, pgs, mpgs)
+
+      implicit none
+
+      real*8 prj(36,25), prjperp(36,25)
+      real*8 prjhat(36,15)
+      integer ms(36,18)
+      common /projectors/ prj,prjperp,prjhat,ms
+
+      integer ii, jj
+      real*8 xtemp
+
+      real*8 gvec(6), vecs(6,24), dists(24,15)
+      real*8 pgs(6,24,15),mpgs(6,24,15)
+
+C
+C      1 --  6 +++
+C      7 -- 12 +--
+C     13 -- 18 -+-
+C     19 -- 24 --+
+C
+
+      do ii = 1, 24
+        call cpyvn(6,gvec,vecs(1,ii))
+        if (ii.ge.7.and.ii.le.18)
+     *      vecs(6,ii) = -vecs(6,ii)
+        if ((ii.ge.7.and.ii.le.12)
+     *       .or.(ii.ge.19))
+     *      vecs(5,ii) = -vecs(5,ii)
+        if (ii.ge.13)
+     *      vecs(4,ii) = -vecs(4,ii)
+        jj = mod(ii-1,6)
+        if (jj.eq.2.or.jj.eq.3) then
+          xtemp = vecs(1,ii)
+          vecs(1,ii) = vecs(2,ii)
+          vecs(2,ii) = xtemp
+          xtemp = vecs(4,ii)
+          vecs(4,ii) = vecs(5,ii)
+          vecs(5,ii) = xtemp
+        endif
+        if (jj.eq.1.or.jj.ge.4) then
+          xtemp = vecs(2,ii)
+          vecs(2,ii) = vecs(3,ii)
+          vecs(3,ii) = xtemp
+          xtemp = vecs(5,ii)
+          vecs(5,ii) = vecs(6,ii)
+          vecs(6,ii) = xtemp
+        endif
+        if (jj.eq.4) then
+          xtemp = vecs(1,ii)
+          vecs(1,ii) = vecs(2,ii)
+          vecs(2,ii) = xtemp
+          xtemp = vecs(4,ii)
+          vecs(4,ii) = vecs(5,ii)
+          vecs(5,ii) = xtemp
+        endif
+        if (jj.eq.3.or.jj.eq.5) then
+          xtemp = vecs(2,ii)
+          vecs(2,ii) = vecs(3,ii)
+          vecs(3,ii) = xtemp
+          xtemp = vecs(5,ii)
+          vecs(5,ii) = vecs(6,ii)
+          vecs(6,ii) = xtemp
+        endif
+        dists(ii,1) =
+     * dabs(vecs(2,ii)-vecs(1,ii))/dsqrt(2.D0)
+        dists(ii,2) =
+     * dabs(vecs(3,ii)-vecs(2,ii))/dsqrt(2.D0)
+        dists(ii,3) = dabs(vecs(4,ii))
+        dists(ii,4) = dabs(vecs(5,ii))
+        dists(ii,5) = dabs(vecs(6,ii))
+        dists(ii,6) =
+     * dabs(vecs(2,ii)-vecs(4,ii))/dsqrt(2.D0)
+        dists(ii,7) =
+     * dabs(vecs(2,ii)-vecs(4,ii))/dsqrt(2.D0)
+        dists(ii,8) =
+     * dabs(vecs(2,ii)+vecs(4,ii))/dsqrt(2.D0)
+        dists(ii,9) =
+     * dabs(vecs(1,ii)-vecs(5,ii))/dsqrt(2.D0)
+        dists(ii,10) =
+     * dabs(vecs(1,ii)-vecs(5,ii))/dsqrt(2.D0)
+        dists(ii,11) =
+     * dabs(vecs(1,ii)+vecs(5,ii))/dsqrt(2.D0)
+        dists(ii,12) =
+     * dabs(vecs(1,ii)-vecs(6,ii))/dsqrt(2.D0)
+        dists(ii,13) =
+     * dabs(vecs(1,ii)-vecs(6,ii))/dsqrt(2.D0)
+        dists(ii,14) =
+     * dabs(vecs(1,ii)+vecs(6,ii))/dsqrt(2.D0)
+        dists(ii,15) =
+     * dabs(vecs(1,ii)+vecs(2,ii)+vecs(4,ii)
+     *   +vecs(5,ii)+vecs(6,ii))/dsqrt(5.D0)
+        do jj = 1,15
+          call rmv6(vecs(1,ii),
+     *      PRJ(1,jj), pgs(1,ii,jj))
+        call imv6(pgs(1,ii,jj),
+     *      MS(1,jj),mpgs(1,ii,jj))
+        enddo
+      enddo
+
+      return
+      end
+
+C    Map a G6 vector onto the intersection of the
+C    face diagonal and body diagonal boundaries.
+C
+C    For a given g6 point, we need the distance
+C    to  8F directly or via 69 and M_6
+C        BF directly of via 69 and M_9
+C        EF firectly or via 6C and M_C
+C    in addition we need M_F applied to the
+C    F targets
+C
+C    So the distances and pgs in order are
+C    ||P_8F_perp.g||  P_8F.g  M_8.P_8F.g
+C    ||P_BF_perp.g||  P_BF.g  M_B.P_BF.g
+C    ||P_EF_perp.g||  P_EF.g  M_E.P_EF.g
+C    ||P_6C_perp.g||  P_6C.g  M_C.P_6C.g
+C    ||P_69_perp.g||  P_69.g  M_6.P_69.g
+C                             M_9.P_69.g
+C    
+C     bfmaps must be called first to generate the vecs
+C     array.
+C
+C     The viable pairs for a given g1 and g2 for
+C     consideration are then
+C
+C     boundary  distances
+C     69:  ||P_69_perp.g1|| ||P_69_perp.g2|| P_69.g1 -- P_69.g2
+C          ||P_69_perp.g1|| ||P_8F_perp.g2|| P_69.g1 -- M_8.P_8F.g2
+C          ||P_69_perp.g1|| ||P_BF_perp.g2|| P_69.g1 -- M_B.P_BF.g2
+C          and with g1 and g2 exchanged
+C     6C:  ||P_6C_perp.g1|| ||P_6C_perp.g2|| P_6C.g1 -- P_6C.g2
+C          ||P_6C_perp.g1|| ||P_EF_perp.g2|| P_69.g1 -- M_C.P_EF.g2
+C          and with g1 and g2 exchanged
+C     8F:  ||P_8F_perp.g1|| ||P_8F_perp.g2|| P_8F.g1 -- P_8F.g2
+C          ||P_8F_perp.g1|| ||P_69_perp.g2|| P_8F.g1 -- M_6.P_69.g
+C     BF:  ||P_BF_perp.g1|| ||P_BF_perp.g2|| P_BF.g1 -- P_BF.g2
+C          ||P_BF_perp.g1|| ||P_69_perp.g2|| P_BF.g1 -- M_9.P_69.g
+C     EF:  ||P_EF_perp.g1|| ||P_EF_perp.g2|| P_EF.g1 -- P_EF.g2
+C          ||P_EF_perp.g1|| ||P_6C_perp.g2|| P_EF.g1 -- M_C.P_6C.g
+
+      subroutine bdfmaps(vecs, dists, pgs, mpgs,
+     *  nmpgs)
+
+      implicit none
+
+      real*8 prj(36,25), prjperp(36,25)
+      real*8 prjhat(36,15)
+      integer ms(36,18)
+      common /projectors/ prj,prjperp,prjhat,ms
+
+      integer ii, jj
+      real*8 xtemp
+
+      real*8 vecs(6,24), dists(24,5)
+      real*8 pgs(6,24,5),mpgs(6,24,6)
+      integer nmpgs(5)
+      real*8 pgtemp(6)
+
+      do ii = 1, 24
+        dists(ii,4) = dsqrt((vecs(1,ii)-vecs(6,ii))**2
+     *                    + (vecs(2,ii)-vecs(4,ii))**2)/
+     *                dsqrt(2.D0)
+        dists(ii,5) = dsqrt((vecs(1,ii)-vecs(5,ii))**2
+     *                    + (vecs(2,ii)-vecs(4,ii))**2)/
+     *                dsqrt(2.D0)
+        dists(ii,1) = dsqrt(
+     *  2.D0*(vecs(6,ii)+vecs(5,ii)+vecs(1,ii))**2
+     *  +3.D0*(vecs(4,ii)+vecs(2,ii))**2
+     *  )/dsqrt(6.D0)
+        dists(ii,2) = dsqrt(
+     *  2.D0*(vecs(6,ii)+vecs(4,ii)+vecs(2,ii))**2
+     *  +3.D0*(vecs(5,ii)+vecs(1,ii))**2
+     *  )/dsqrt(6.D0)
+        dists(ii,3) = dsqrt(
+     *  2.D0*(vecs(5,ii)+vecs(4,ii)+vecs(2,ii))**2
+     *  +3.D0*(vecs(6,ii)+vecs(1,ii))**2
+     *  )/dsqrt(6.D0)
+C
+C       PRJ(*,23) is P_8F
+C       PRJ(*,24) is P_BF
+C       PRJ(*,25) is P_EF
+C
+        do jj = 1,3
+          call rmv6(vecs(1,ii),
+     *      PRJ(1,22+jj), pgs(1,ii,jj))
+          call imv6(pgs(1,ii,jj),
+     *      MS(1,jj*3+5),mpgs(1,ii,jj))
+        enddo
+        call rmv6(vecs(1,ii),PRJ(1,6),pgtemp)
+        call rmv6(pgtemp,PRJ(1,12),pgs(1,ii,4))
+        call rmv6(pgtemp,PRJ(1,9),pgs(1,ii,5))
+        call imv6(pgs(1,ii,4),
+     *      MS(1,12),mpgs(1,ii,4))
+        call imv6(pgs(1,ii,5),
+     *      MS(1,6),mpgs(1,ii,5))
+        call imv6(pgs(1,ii,5),
+     *      MS(1,9),mpgs(1,ii,6))
+C           dists(ii,1) = 1.D38
+C           dists(ii,2) = 1.D38
+C           dists(ii,3) = 1.D38
+C           dists(ii,4) = 1.D38
+C           dists(ii,5) = 1.D38
+      enddo
+      nmpgs(1) = 1
+      nmpgs(2) = 1
+      nmpgs(3) = 1
+      nmpgs(4) = 1
+      nmpgs(5) = 2
+      return
+      end
+
 
 C     Compute the best distance between 2 G6 vectors
 C     allowing for permulations of g1, g2, g3 as
@@ -1331,6 +1547,7 @@ C
       implicit none
       real*8 gv1(6), gv2(6)
       real*8 FOLDMDIST
+      real*8 NCEDIST
       real*8 g456dist
       common/xdebug/xdebug
       logical xdebug
@@ -1343,798 +1560,244 @@ C      if (xdebug) then
 C        write(7,'(a,1x,6f9.2)') "NCDIST gv1 ",gv1
 C        write(7,'(a,1x,6f9.2)') "NCDIST gv2 ",gv2
 C      endif
-      NCDIST=foldmdist(gv1,gv2,0,9.D38)
-C      if (xdebug) then
-C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-C     * NCDIST
-C      endif
-      NCDIST=foldmdist(gv1,gv2,7,NCDIST)
-C      if (xdebug) then
-C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-C     * NCDIST
-C      endif
-      NCDIST=foldmdist(gv1,gv2,10,NCDIST)
-C      if (xdebug) then
-C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-C     * NCDIST
-C      endif
-      NCDIST=foldmdist(gv1,gv2,13,NCDIST)
-C      if (xdebug) then
-C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-C     * NCDIST
-C      endif
-      NCDIST=foldmdist(gv1,gv2,15,NCDIST)
-C      if (xdebug) then
-C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-C     * NCDIST
-C      endif
-      NCDIST=foldmdist(gv1,gv2,23,NCDIST)
-C      if (xdebug) then
-C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-C     * NCDIST
-C      endif
-      NCDIST=foldmdist(gv1,gv2,24,NCDIST)
-C      if (xdebug) then
-C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-C     * NCDIST
-C      endif
-      NCDIST=foldmdist(gv1,gv2,25,NCDIST)
-C      if (xdebug) then
-C      write(7,'(a,1x,6f13.4)') "NCDIST dist down to ",
-C     * NCDIST
-C      endif
-      end
-
-C     DistF -- distance to the F boundary
-      real*8 function DistF(g)
-      implicit none
-      real*8 g(6), x12
-      common/xdebug/xdebug
-      logical xdebug
-
-      x12 = dabs(g(1))+dabs(g(2))+dabs(g(3))
-     * -max(dabs(g(1)),dabs(g(2)),dabs(g(3)))
-      DistF = min(dabs(x12+g(4)+g(5)+g(6)),
-     *            dabs(x12+g(4)-g(5)-g(6)),
-     *            dabs(x12-g(4)+g(5)-g(6)),
-     *            dabs(x12-g(4)-g(5)+g(6)))
-     *            /dsqrt(5.D0)
-C       if (xdebug) write(7,*) "Distf ",DistF,g
-      end
-
-      logical function inncone(gvec)
-      implicit none
-      real*8 gvec(6),glow,gmid,ghigh,gmax,precn
-      integer ii,imax
-      data precn/1.005D0/
-
-      inncone = .false.
-      glow = min(gvec(1), gvec(2), gvec(3))
-      if (glow.le.0.D0) return
-      ghigh = max(gvec(1), gvec(2), gvec(3))
-      gmid = gvec(1)+gvec(2)+gvec(3)-glow-ghigh
-      if (max(dabs(gvec(4)),dabs(gvec(5)),
-     *  dabs(gvec(6))).gt.gmid*precn) return
-      gmax = dabs(gvec(4))
-      imax = 4
-      if (dabs(gvec(5)).gt.gmax) then
-        gmax = dabs(gvec(5))
-        imax = 5
-      endif
-      if (dabs(gvec(6)).gt.gmax) then
-        gmax = dabs(gvec(6))
-        imax = 6
-      endif
-      do ii = 4,6
-        if (ii.ne.imax.and.
-     *    dabs(gvec(ii)).gt.glow*precn) return
-      enddo
-      inncone = .true.
+      NCDIST = NCEDIST(gv1,gv2)
       return
       end
 
+C     NCEDIST -- distance between two points in the
+C     Niggli Cone following the embedding paths
+C     to the 15 boundaries
 
-C     FOLDMDIST(GVEC1,GVEC2,IP,CFOLDDIST)
-C       return the distance betweem two G6 vectors
-C       going through the given boundary
-C       (7, A, C, F) after taking the second
-C       vector through the 6 exchanges of A, B, C
-C
-      real*8 function FOLDMDIST(GVEC1,GVEC2,IP,CFOLDDIST)
+      REAL*8 FUNCTION NCEDIST(gvec1,gvec2)
       implicit none
 
-      REAL*8 GVEC1(6), GVEC2(6), CFOLDDIST
-      REAL*8 FOLDxDIST
-      integer ip
-      REAL*8 m1g1(6),m2g1(6),m1m2g1(6)
-      REAL*8 m2m1g1(6),m2m1m2g1(6)
-      REAL*8 m1g2(6),m2g2(6),m1m2g2(6)
-      REAL*8 m2m1g2(6),m2m1m2g2(6)
-      real*8 prj(36,25), prjperp(36,25)
-      real*8 prjhat(36,15)
-      integer ms(36,18)
-      common /projectors/ prj,prjperp,prjhat,ms
+      real*8 gvec1(6), vecs1(6,24), dists1(24,15)
+      real*8 pgs1(6,24,15),mpgs1(6,24,15)
+      real*8 fdists1(24,5),fdists2(24,5)
+      real*8 fpgs1(6,24,5),fpgs2(6,24,5)
+      real*8 fmpgs1(6,24,6), fmpgs2(6,24,6)
+      integer nmpgs(5)
+      real*8 gvec2(6), vecs2(6,24), dists2(24,15)
+      real*8 pgs2(6,24,15),mpgs2(6,24,15)
+      real*8 g123dist, g456dist
+      real*8 dpg1pg2
+      integer jx1, jx2, ix2, jo1, jo2, kx1, kx2
+      integer jord(15), jord2(15)
+      integer i1,i2,j1,j2
       common/xdebug/xdebug
       logical xdebug
-      real*8 h1,h1m1,h1m2,h1m1m2,h1m2m1,h1m2m1m2
-      real*8 h2,h2m1,h2m2,h2m1m2,h2m2m1,h2m2m1m2
-      real*8 distF
-      real*8 g123dist,g456dist
-    
-      call imv6(gvec1,MS(1,1),m1g1)
-      call imv6(gvec1,MS(1,2),m2g1)
-      call imv6(gvec1,MS(1,16),m1m2g1)
-      call imv6(gvec1,MS(1,17),m2m1g1)
-      call imv6(gvec1,MS(1,18),m2m1m2g1)
-      call imv6(gvec2,MS(1,1),m1g2)
-      call imv6(gvec2,MS(1,2),m2g2)
-      call imv6(gvec2,MS(1,16),m1m2g2)
-      call imv6(gvec2,MS(1,17),m2m1g2)
-      call imv6(gvec2,MS(1,18),m2m1m2g2)
-      FOLDMDIST = CFOLDDIST
-      
-      if (ip.eq.0) go to 1000
-      if (ip.ge. 6 .and. ip.le. 8) go to 1007
-      if (ip.ge. 9 .and. ip.le.11) go to 1010
-      if (ip.ge.12 .and. ip.le.14) go to 1013
-      if (ip.eq.15) go to 1015
-      if (ip.eq.23) go to 1023
-      if (ip.eq.24) go to 1024
-      if (ip.eq.25) go to 1025
-      if (ip.eq.22) go to 1022
+      data jord/1,2,9,10,11,6,7,8,12,13,14,3,4,5,15/
+      data jord2/1,2,11,10,9,8,7,6,14,13,12,3,4,5,15/
 
- 1000 continue
-      FOLDMDIST = min(FOLDMDIST,
-     *  g123dist(gvec1,gvec2))
-       return
+      call bdmaps(gvec1,vecs1,dists1,pgs1,mpgs1)
+      call bdfmaps(vecs1,fdists1,fpgs1,fmpgs1,nmpgs)
+      call bdmaps(gvec2,vecs2,dists2,pgs2,mpgs2)
+      call bdfmaps(vecs2,fdists2,fpgs2,fmpgs2,nmpgs)
 
- 1007 continue
-      h1 = abs(gvec1(2)-abs(gvec1(4)))/sqrt(2.D0)
-      h2 = abs(gvec2(2)-abs(gvec2(4)))/sqrt(2.D0)
-      h1m1 = abs(m1g1(2)-abs(m1g1(4)))/sqrt(2.D0)
-      h2m1 = abs(m1g2(2)-abs(m1g2(4)))/sqrt(2.D0)
-      h1m2 = abs(m2g1(2)-abs(m2g1(4)))/sqrt(2.D0)
-      h2m2 = abs(m2g2(2)-abs(m2g2(4)))/sqrt(2.D0)
-      h1m1m2 = abs(m1m2g1(2)-abs(m1m2g1(4)))/sqrt(2.D0)
-      h2m1m2 = abs(m1m2g2(2)-abs(m1m2g2(4)))/sqrt(2.D0)
-      h1m2m1 = abs(m2m1g1(2)-abs(m2m1g1(4)))/sqrt(2.D0)
-      h2m2m1 = abs(m2m1g2(2)-abs(m2m1g2(4)))/sqrt(2.D0)
-      h1m2m1m2 = 
-     * abs(m2m1m2g1(2)-abs(m2m1m2g1(4)))/sqrt(2.D0)
-      h2m2m1m2 =
-     * abs(m2m1m2g2(2)-abs(m2m1m2g2(4)))/sqrt(2.D0)
-      go to 1100
+      NCEDIST = g123dist(gvec1,gvec2)
 
- 1010 continue
-      h1 = abs(gvec1(1)-abs(gvec1(5)))/sqrt(2.D0)
-      h2 = abs(gvec2(1)-abs(gvec2(5)))/sqrt(2.D0)
-      h1m1 = abs(m1g1(1)-abs(m1g1(5)))/sqrt(2.D0)
-      h2m1 = abs(m1g2(1)-abs(m1g2(5)))/sqrt(2.D0)
-      h1m2 = abs(m2g1(1)-abs(m2g1(5)))/sqrt(2.D0)
-      h2m2 = abs(m2g2(1)-abs(m2g2(5)))/sqrt(2.D0)
-      h1m1m2 = abs(m1m2g1(1)-abs(m1m2g1(5)))/sqrt(2.D0)
-      h2m1m2 = abs(m1m2g2(1)-abs(m1m2g2(5)))/sqrt(2.D0)
-      h1m2m1 = abs(m2m1g1(1)-abs(m2m1g1(5)))/sqrt(2.D0)
-      h2m2m1 = abs(m2m1g2(1)-abs(m2m1g2(5)))/sqrt(2.D0)
-      h1m2m1m2 =
-     * abs(m2m1m2g1(1)-abs(m2m1m2g1(5)))/sqrt(2.D0)
-      h2m2m1m2 =
-     * abs(m2m1m2g2(1)-abs(m2m1m2g2(5)))/sqrt(2.D0)
-      go to 1100
-
- 1013 continue
-      h1 = abs(gvec1(1)-abs(gvec1(6)))/sqrt(2.D0)
-      h2 = abs(gvec2(1)-abs(gvec2(6)))/sqrt(2.D0)
-      h1m1 = abs(m1g1(1)-abs(m1g1(6)))/sqrt(2.D0)
-      h2m1 = abs(m1g2(1)-abs(m1g2(6)))/sqrt(2.D0)
-      h1m2 = abs(m2g1(1)-abs(m2g1(6)))/sqrt(2.D0)
-      h2m2 = abs(m2g2(1)-abs(m2g2(6)))/sqrt(2.D0)
-      h1m1m2 = abs(m1m2g1(1)-abs(m1m2g1(6)))/sqrt(2.D0)
-      h2m1m2 = abs(m1m2g2(1)-abs(m1m2g2(6)))/sqrt(2.D0)
-      h1m2m1 = abs(m2m1g1(1)-abs(m2m1g1(6)))/sqrt(2.D0)
-      h2m2m1 = abs(m2m1g2(1)-abs(m2m1g2(6)))/sqrt(2.D0)
-      h1m2m1m2 =
-     * abs(m2m1m2g1(1)-abs(m2m1m2g1(6)))/sqrt(2.D0)
-      h2m2m1m2 =
-     * abs(m2m1m2g2(1)-abs(m2m1m2g2(6)))/sqrt(2.D0)
-      go to 1100
-
-
- 1015 continue
-      h1 = DistF(gvec1)
-      h2 = DistF(gvec2)
-      h1m1 = DistF(m1g1)
-      h2m1 = DistF(m1g2)
-      h1m2 = DistF(m2g1)
-      h2m2 = DistF(m2g2)
-      h1m1m2 = DistF(m1m2g1)
-      h2m1m2 = DistF(m1m2g2)
-      h1m2m1 = DistF(m2m1g1)
-      h2m2m1 = DistF(m2m1g2)
-      h1m2m1m2 = DistF(m2m1m2g1)
-      h2m2m1m2 = DistF(m2m1m2g2)
-      goto 1100
-
-C 8F boundary
- 1023 continue
-      h1 = dsqrt(((gvec1(2)-dabs(gvec1(4)))**2)/2.D0
-     *+((gvec1(1)-dabs(gvec1(5))-dabs(gvec1(6)))**2)/3.D0)
-      h2 = dsqrt(((gvec2(2)-dabs(gvec2(4)))**2)/2.D0
-     *+((gvec2(1)-dabs(gvec2(5))-dabs(gvec2(6)))**2)/3.D0)
-      h1m1 = dsqrt(((m1g1(2)-dabs(m1g1(4)))**2)/2.D0
-     *+((m1g1(1)-dabs(m1g1(5))-dabs(m1g1(6)))**2)/3.D0)
-      h2m1 = dsqrt(((m1g2(2)-dabs(m1g2(4)))**2)/2.D0
-     *+((m1g2(1)-dabs(m1g2(5))-dabs(m1g2(6)))**2)/3.D0)
-      h1m2 = dsqrt(((m2g1(2)-dabs(m2g1(4)))**2)/2.D0
-     *+((m2g1(1)-dabs(m2g1(5))-dabs(m2g1(6)))**2)/3.D0)
-      h2m2 = dsqrt(((m2g2(2)-dabs(m2g2(4)))**2)/2.D0
-     *+((m2g2(1)-dabs(m2g2(5))-dabs(m2g2(6)))**2)/3.D0)
-      h1m1m2 = dsqrt(((m1m2g1(2)-dabs(m1m2g1(4)))**2)/2.D0
-     *+((m1m2g1(1)-dabs(m1m2g1(5))-dabs(m1m2g1(6)))**2)/3.D0)
-      h2m1m2 = dsqrt(((m1m2g2(2)-dabs(m1m2g2(4)))**2)/2.D0
-     *+((m1m2g2(1)-dabs(m1m2g2(5))-dabs(m1m2g2(6)))**2)/3.D0)
-      h1m2m1 = dsqrt(((m2m1g1(2)-dabs(m2m1g1(4)))**2)/2.D0
-     *+((m2m1g1(1)-dabs(m2m1g1(5))-dabs(m2m1g1(6)))**2)/3.D0)
-      h2m2m1 = dsqrt(((m2m1g2(2)-dabs(m2m1g2(4)))**2)/2.D0
-     *+((m2m1g2(1)-dabs(m2m1g2(5))-dabs(m2m1g2(6)))**2)/3.D0)
-      h1m2m1m2 = dsqrt(((m2m1m2g1(2)-dabs(m2m1m2g1(4)))**2)/2.D0
-     *+((m2m1m2g1(1)-dabs(m2m1m2g1(5))-dabs(m2m1m2g1(6)))**2)/3.D0)
-      h2m2m1m2 = dsqrt(((m2m1m2g2(2)-dabs(m2m1m2g2(4)))**2)/2.D0
-     *+((m2m1m2g2(1)-dabs(m2m1m2g2(5))-dabs(m2m1m2g2(6)))**2)/3.D0)
-      go to 1100
-
-C BF boundary
- 1024 continue
-      h1 = dsqrt(((gvec1(1)-dabs(gvec1(5)))**2)/2.D0
-     *+((gvec1(2)-dabs(gvec1(4))-dabs(gvec1(6)))**2)/3.D0)
-      h2 = dsqrt(((gvec2(1)-dabs(gvec2(5)))**2)/2.D0
-     *+((gvec2(2)-dabs(gvec2(4))-dabs(gvec2(6)))**2)/3.D0)
-      h1m1 = dsqrt(((m1g1(1)-dabs(m1g1(5)))**2)/2.D0
-     *+((m1g1(2)-dabs(m1g1(4))-dabs(m1g1(6)))**2)/3.D0)
-      h2m1 = dsqrt(((m1g2(1)-dabs(m1g2(5)))**2)/2.D0
-     *+((m1g2(2)-dabs(m1g2(4))-dabs(m1g2(6)))**2)/3.D0)
-      h1m2 = dsqrt(((m2g1(1)-dabs(m2g1(5)))**2)/2.D0
-     *+((m2g1(2)-dabs(m2g1(4))-dabs(m2g1(6)))**2)/3.D0)
-      h2m2 = dsqrt(((m2g2(1)-dabs(m2g2(5)))**2)/2.D0
-     *+((m2g2(2)-dabs(m2g2(4))-dabs(m2g2(6)))**2)/3.D0)
-      h1m1m2 = dsqrt(((m1m2g1(1)-dabs(m1m2g1(5)))**2)/2.D0
-     *+((m1m2g1(2)-dabs(m1m2g1(4))-dabs(m1m2g1(6)))**2)/3.D0)
-      h2m1m2 = dsqrt(((m1m2g2(1)-dabs(m1m2g2(5)))**2)/2.D0
-     *+((m1m2g2(2)-dabs(m1m2g2(4))-dabs(m1m2g2(6)))**2)/3.D0)
-      h1m2m1 = dsqrt(((m2m1g1(1)-dabs(m2m1g1(5)))**2)/2.D0
-     *+((m2m1g1(2)-dabs(m2m1g1(4))-dabs(m2m1g1(6)))**2)/3.D0)
-      h2m2m1 = dsqrt(((m2m1g2(1)-dabs(m2m1g2(5)))**2)/2.D0
-     *+((m2m1g2(2)-dabs(m2m1g2(4))-dabs(m2m1g2(6)))**2)/3.D0)
-      h1m2m1m2 = dsqrt(((m2m1m2g1(1)-dabs(m2m1m2g1(5)))**2)/2.D0
-     *+((m2m1m2g1(2)-dabs(m2m1m2g1(4))-dabs(m2m1m2g1(6)))**2)/3.D0)
-      h2m2m1m2 = dsqrt(((m2m1m2g2(1)-dabs(m2m1m2g2(5)))**2)/2.D0
-     *+((m2m1m2g2(2)-dabs(m2m1m2g2(4))-dabs(m2m1m2g2(6)))**2)/3.D0)
-      go to 1100
-
-C EF boundary
- 1025 continue
-      h1 = dsqrt(((gvec1(1)-dabs(gvec1(6)))**2)/2.D0
-     *+((gvec1(2)-dabs(gvec1(4))-dabs(gvec1(5)))**2)/3.D0)
-      h2 = dsqrt(((gvec2(1)-dabs(gvec2(6)))**2)/2.D0
-     *+((gvec2(2)-dabs(gvec2(4))-dabs(gvec2(5)))**2)/3.D0)
-      h1m1 = dsqrt(((m1g1(1)-dabs(m1g1(6)))**2)/2.D0
-     *+((m1g1(2)-dabs(m1g1(4))-dabs(m1g1(5)))**2)/3.D0)
-      h2m1 = dsqrt(((m1g2(1)-dabs(m1g2(6)))**2)/2.D0
-     *+((m1g2(2)-dabs(m1g2(4))-dabs(m1g2(5)))**2)/3.D0)
-      h1m2 = dsqrt(((m2g1(1)-dabs(m2g1(6)))**2)/2.D0
-     *+((m2g1(2)-dabs(m2g1(4))-dabs(m2g1(5)))**2)/3.D0)
-      h2m2 = dsqrt(((m2g2(1)-dabs(m2g2(6)))**2)/2.D0
-     *+((m2g2(2)-dabs(m2g2(4))-dabs(m2g2(5)))**2)/3.D0)
-      h1m1m2 = dsqrt(((m1m2g1(1)-dabs(m1m2g1(6)))**2)/2.D0
-     *+((m1m2g1(2)-dabs(m1m2g1(4))-dabs(m1m2g1(5)))**2)/3.D0)
-      h2m1m2 = dsqrt(((m1m2g2(1)-dabs(m1m2g2(6)))**2)/2.D0
-     *+((m1m2g2(2)-dabs(m1m2g2(4))-dabs(m1m2g2(5)))**2)/3.D0)
-      h1m2m1 = dsqrt(((m2m1g1(1)-dabs(m2m1g1(6)))**2)/2.D0
-     *+((m2m1g1(2)-dabs(m2m1g1(4))-dabs(m2m1g1(5)))**2)/3.D0)
-      h2m2m1 = dsqrt(((m2m1g2(1)-dabs(m2m1g2(6)))**2)/2.D0
-     *+((m2m1g2(2)-dabs(m2m1g2(4))-dabs(m2m1g2(5)))**2)/3.D0)
-      h1m2m1m2 = dsqrt(((m2m1m2g1(1)-dabs(m2m1m2g1(6)))**2)/2.D0
-     *+((m2m1m2g1(2)-dabs(m2m1m2g1(4))-dabs(m2m1m2g1(5)))**2)/3.D0)
-      h2m2m1m2 = dsqrt(((m2m1m2g2(1)-dabs(m2m1m2g2(6)))**2)/2.D0
-     *+((m2m1m2g2(2)-dabs(m2m1m2g2(4))-dabs(m2m1m2g2(5)))**2)/3.D0)
-      go to 1100
-
-
- 1022 continue
-      h1 = dsqrt(max(0.D0,2.D0*(gvec1(1)**2+gvec1(2)**2+gvec1(3)**2
-     *     - gvec1(2)*gvec1(3)
-     *     - gvec1(1)*gvec1(3)
-     *     - gvec1(1)*gvec1(2))/3.D0))
-      h2 = dsqrt(max(0.D0,2.D0*(gvec2(1)**2+gvec2(2)**2+gvec2(3)**2
-     *     - gvec2(2)*gvec2(3)
-     *     - gvec2(1)*gvec2(3)
-     *     - gvec2(1)*gvec2(2))/3.D0))
-      h1m1 = h1
-      h2m1 = h2
-      h1m2 = h1
-      h2m2 = h2
-      h1m1m2 = h1
-      h2m1m2 = h2
-      h1m2m1 = h1
-      h2m2m1 = h2
-      h1m2m1m2 = h1
-      h2m2m1m2 = h2
-
-
- 1100 continue
-C      if (xdebug) then
-C        write(7,*) "FOLDMDIST ip ",
-C     *  "h1, h2, h1m1, h2m1, h1m2, h2m2 ",
-C     *  ip, h1, h2, h1m1, h2m1, h1m2, h2m2
-C        write(7,*) "FOLDMDIST ip ",
-C     *  "h1m1m2, h2m1m2, h1m2m1, ",
-C     *  "h2m2m1, h1m2m1m2, h2m2m1m2 ",
-C     *  ip, h1m1m2, h2m1m2, h1m2m1,
-C     *  h2m2m1, h1m2m1m2, h2m2m1m2
-C      end if
-
-      if (h1.lt.FOLDMDIST) then
-      if (h1+h2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(GVEC1,GVEC2,ip,FOLDMDIST,1,1)
-      if (h1+h2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(GVEC1,m1g2,ip,FOLDMDIST,1,2)
-      if (h1+h2m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(GVEC1,m2g2,ip,FOLDMDIST,1,3)
-      if (h1+h2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(GVEC1,m1m2g2,ip,FOLDMDIST,1,4)
-      if (h1+h2m2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(GVEC1,m2m1g2,ip,FOLDMDIST,1,5)
-      if (h1+h2m2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(GVEC1,m2m1m2g2,ip,FOLDMDIST,1,6)
+      do i1 = 1,24
+      do ix2 = 1,24
+      i2 = mod(i1+ix2-2,24)+1
+      do jx1 = 1,15
+      j1 = jord(jx1)
+      if (dists1(i1,j1).lt.NCEDIST) then
+        jx2 = jx1
+        j2 = jord2(jx2)
+        if (j1.eq.j2) then
+          if(dists1(i1,j1)+dists2(i2,j2)
+     *      .lt.NCEDIST) then
+          dpg1pg2 = min(
+     *  g456dist(pgs1(1,i1,j1),pgs2(1,i2,j2)),
+     *  g456dist(pgs1(1,i1,j1),mpgs2(1,i2,j2)),
+     *  g456dist(mpgs1(1,i1,j1),pgs2(1,i2,j2)),
+     *  g456dist(mpgs1(1,i1,j1),mpgs2(1,i2,j2)))
+          NCEDIST = min(NCEDIST,
+     *     dsqrt((dists1(i1,j1)+dists2(i2,j2))**2
+     *       + dpg1pg2**2))
+          endif
+        else
+          if (dists1(i1,j1)+dists2(i2,j1)
+     *      .lt.NCEDIST) then
+          dpg1pg2 =
+     *  g456dist(pgs1(1,i1,j1),pgs2(1,i2,j1))
+          NCEDIST = min(NCEDIST,
+     *     dsqrt((dists1(i1,j1)+dists2(i2,j1))**2
+     *       + dpg1pg2**2))
+          endif
+          if (dists1(i1,j1)+dists2(i2,j2)
+     *      .lt.NCEDIST) then
+          dpg1pg2 =
+     *  g456dist(pgs1(1,i1,j1),mpgs2(1,i2,j2))
+          NCEDIST = min(NCEDIST,
+     *     dsqrt((dists1(i1,j1)+dists2(i2,j2))**2
+     *       + dpg1pg2**2))
+          endif
+        endif
       endif
-
-      if (h1m1.lt.FOLDMDIST) then
-      if (h1m1+h2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1g1,GVEC2,ip,FOLDMDIST,2,1)
-      if (h1m1+h2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1g1,m1g2,ip,FOLDMDIST,2,2)
-      if (h1m1+h2m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1g1,m2g2,ip,FOLDMDIST,2,3)
-      if (h1m1+h2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1g1,m1m2g2,ip,FOLDMDIST,2,4)
-      if (h1m1+h2m2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1g1,m2m1g2,ip,FOLDMDIST,2,5)
-      if (h1m1+h2m2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1g1,m2m1m2g2,ip,FOLDMDIST,2,6)
-      endif
-
-      if (h1m2.lt.FOLDMDIST) then
-      if (h1m2+h2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2g1,GVEC2,ip,FOLDMDIST,3,1)
-      if (h1m2+h2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2g1,m1g2,ip,FOLDMDIST,3,2)
-      if (h1m2+h2m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2g1,m2g2,ip,FOLDMDIST,3,3)
-      if (h1m2+h2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2g1,m1m2g2,ip,FOLDMDIST,3,4)
-      if (h1m2+h2m2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2g1,m2m1g2,ip,FOLDMDIST,3,5)
-      if (h1m2+h2m2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2g1,m2m1m2g2,ip,FOLDMDIST,3,6)
-      endif
-
-      if (h1m1m2.lt.FOLDMDIST) then
-      if (h1m1m2+h2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1m2g1,GVEC2,ip,FOLDMDIST,4,1)
-      if (h1m1m2+h2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1m2g1,m1g2,ip,FOLDMDIST,4,2)
-      if (h1m1m2+h2m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1m2g1,m2g2,ip,FOLDMDIST,4,3)
-      if (h1m1m2+h2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1m2g1,m1m2g2,ip,FOLDMDIST,4,4)
-      if (h1m1m2+h2m2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1m2g1,m2m1g2,ip,FOLDMDIST,4,5)
-      if (h1m1m2+h2m2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m1m2g1,m2m1m2g2,ip,FOLDMDIST,4,6)
-      endif
-
-      if (h1m2m1.lt.FOLDMDIST) then
-      if (h1m2m1+h2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1g1,GVEC2,ip,FOLDMDIST,5,1)
-      if (h1m2m1+h2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1g1,m1g2,ip,FOLDMDIST,5,2)
-      if (h1m2m1+h2m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1g1,m2g2,ip,FOLDMDIST,5,3)
-      if (h1m2m1+h2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1g1,m1m2g2,ip,FOLDMDIST,5,4)
-      if (h1m2m1+h2m2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1g1,m2m1g2,ip,FOLDMDIST,5,5)
-      if (h1m2m1+h2m2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1g1,m2m1m2g2,ip,FOLDMDIST,5,6)
-      endif
-
-      if (h1m2m1m2.lt.FOLDMDIST) then
-      if (h1m2m1m2+h2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1m2g1,GVEC2,ip,FOLDMDIST,6,1)
-      if (h1m2m1m2+h2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1m2g1,m1g2,ip,FOLDMDIST,6,2)
-      if (h1m2m1m2+h2m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1m2g1,m2g2,ip,FOLDMDIST,6,3)
-      if (h1m2m1m2+h2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1m2g1,m1m2g2,ip,FOLDMDIST,6,4)
-      if (h1m2m1m2+h2m2m1.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1m2g1,m2m1g2,ip,FOLDMDIST,6,5)
-      if (h1m2m1m2+h2m2m1m2.lt.FOLDMDIST)
-     * FOLDMDIST = FOLDxDIST(m2m1m2g1,m2m1m2g2,ip,FOLDMDIST,6,6)
-      endif
-
-      end
-
-
-C     FOLDXDIST -- return the distance between two
-C     G6 vectors going through the given boundary
-C     (7, A, C or F)
-C
-C     is1 and is2 are the bdy 1,2 symmetry op used
-C
-      REAL*8 FUNCTION FOLDXDIST(GVEC1,GVEC2,IP,CFOLDDIST,
-     *  is1, is2)
-
-      implicit none
-
-      REAL*8 GVEC1(6), GVEC2(6), CFOLDDIST
-      integer ip
-      REAL*8 pg1(6),pg2(6),mpg1(6),mpg2(6)
-      real*8 fc1(6),fc2(6)
-      real*8 pfcm1(6),pfcm2(6)
-      real*8 mpfc1(6),mpfc2(6)
-      real*8 mg1(6,3),mg2(6,3)
-      real*8 bd1,bd2
-      real*8 prj(36,25), prjperp(36,25)
-      real*8 prjhat(36,15)
-      integer ms(36,18)
-      common /projectors/ prj,prjperp,prjhat,ms
-      integer i, is1, is2
-      real*8 ht1,ht2,g123dist,g456dist,dist12
-      common/xdebug/xdebug
-      logical xdebug
-      integer ihist(22,36)
-      common /hist/ihist
-      real*8 DistF, anorm
-      logical inncone,lpg1,lmpg1,lpg2,lmpg2
-      logical lfc1,lfc2
-
-
-C      if (xdebug) then
-C        write(7,*) "FOLDxDIST ip, CFOLDDIST: ",ip,CFOLDDIST
-C        write(7,'(a,1x,6f9.2)') "FOLDXDIST gvec1: ",gvec1
-C        write(7,'(a,1x,6f9.2)') "FOLDXDIST gvec2: ",gvec2
-C      endif
-
-      foldxdist = cfolddist
-
-      do i = 1,6
-        pg1(i) = ABS(GVEC1(i))
-        pg2(i) = ABS(GVEC2(i))
-        mpg1(i) = ABS(GVEC1(i))
-        mpg2(i) = ABS(GVEC2(i))
-        fc1(i) = GVEC1(i)
-        fc2(i) = GVEC2(i)
       enddo
-
-      lfc1 = .true.
-      lfc2 = .true.
-
-      do i = 4,6
-        if (fc1(i).le.0.D0) lfc1 = .not. lfc1
-        if (fc2(i).lt.0.D0) lfc2 = .not. lfc2
+C     69
+      if (fdists1(i1,5)+fdists2(i2,5).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"69 shortcut 1",
+C     *     fdists1(i1,5),fdists2(i2,5),
+C     *     g456dist(fpgs1(1,i1,5),fpgs2(1,i2,5))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,5)+fdists2(i2,5))**2
+     *      + g456dist(fpgs1(1,i1,5),fpgs2(1,i2,5))**2))
+      endif
+      if (fdists1(i1,5)+fdists2(i2,1).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"69 shortcut 2",
+C     *     fdists1(i1,5),fdists2(i2,1),
+C     *     g456dist(fpgs1(1,i1,5),fmpgs2(1,i2,1))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,5)+fdists2(i2,1))**2
+     *      + g456dist(fpgs1(1,i1,5),fmpgs2(1,i2,1))**2))
+      endif
+      if (fdists1(i1,5)+fdists2(i2,2).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"69 shortcut 3",
+C     *     fdists1(i1,5),fdists2(i2,2),
+C     *     g456dist(fpgs1(1,i1,5),fmpgs2(1,i2,2))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,5)+fdists2(i2,2))**2
+     *      + g456dist(fpgs1(1,i1,5),fmpgs2(1,i2,2))**2))
+      endif
+      if (fdists1(i1,1)+fdists2(i2,5).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"69 shortcut 4",
+C     *     fdists1(i1,1),fdists2(i2,5),
+C     *     g456dist(fmpgs1(1,i1,1),fmpgs2(1,i2,5))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,1)+fdists2(i2,5))**2
+     *      + g456dist(fmpgs1(1,i1,1),fpgs2(1,i2,5))**2))
+      endif
+      if (fdists1(i1,2)+fdists2(i2,5).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"69 shortcut 4",
+C     *     fdists1(i1,2),fdists2(i2,5),
+C     *     g456dist(fmpgs1(1,i1,2),fpgs2(1,i2,5))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,2)+fdists2(i2,5))**2
+     *      + g456dist(fmpgs1(1,i1,2),fpgs2(1,i2,5))**2))
+      endif
+C     6C
+      if (fdists1(i1,4)+fdists2(i2,4).lt.NCEDIST) then
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,4)+fdists2(i2,4))**2
+     *      + g456dist(fpgs1(1,i1,4),fpgs2(1,i2,4))**2))
+      endif
+      if (fdists1(i1,4)+fdists2(i2,3).lt.NCEDIST) then
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,4)+fdists2(i2,3))**2
+     *      + g456dist(fpgs1(1,i1,4),fmpgs2(1,i2,3))**2))
+      endif
+      if (fdists1(i1,3)+fdists2(i2,4).lt.NCEDIST) then
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,3)+fdists2(i2,4))**2
+     *      + g456dist(fmpgs1(1,i1,3),fpgs2(1,i2,4))**2))
+      endif
+C     8F
+      if (fdists1(i1,1)+fdists2(i2,1).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"8F shortcut 1",
+C     *     fdists1(i1,1),fdists2(i2,1),
+C     *     g456dist(fpgs1(1,i1,1),fpgs2(1,i2,1))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,1)+fdists2(i2,1))**2
+     *      + g456dist(fpgs1(1,i1,1),fpgs2(1,i2,1))**2))
+      endif
+      if (fdists1(i1,1)+fdists2(i2,5).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"8F shortcut 2",
+C     *     fdists1(i1,1),fdists2(i2,5),
+C     *     g456dist(fpgs1(1,i1,1),fmpgs2(1,i2,5))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,1)+fdists2(i2,5))**2
+     *      + g456dist(fpgs1(1,i1,1),fmpgs2(1,i2,5))**2))
+      endif
+      if (fdists1(i1,5)+fdists2(i2,1).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"8F shortcut 3",
+C     *     fdists1(i1,5),fdists2(i2,1),
+C     *     g456dist(fmpgs1(1,i1,5),fpgs2(1,i2,1))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,5)+fdists2(i2,1))**2
+     *      + g456dist(fmpgs1(1,i1,5),fpgs2(1,i2,1))**2))
+      endif
+C     BF
+      if (fdists1(i1,2)+fdists2(i2,2).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"BF shortcut 1",
+C     *     fdists1(i1,1),fdists2(i2,1),
+C     *     g456dist(fpgs1(1,i1,1),fpgs2(1,i2,1))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,1)+fdists2(i2,1))**2
+     *      + g456dist(fpgs1(1,i1,1),fpgs2(1,i2,1))**2))
+      endif
+      if (fdists1(i1,2)+fdists2(i2,5).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"BF shortcut 2",
+C     *     fdists1(i1,2),fdists2(i2,5),
+C     *     g456dist(fpgs1(1,i1,2),fmpgs2(1,i2,6))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,2)+fdists2(i2,5))**2
+     *      + g456dist(fpgs1(1,i1,2),fmpgs2(1,i2,6))**2))
+      endif
+      if (fdists1(i1,5)+fdists2(i2,2).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"BF shortcut 3",
+C     *     fdists1(i1,5),fdists2(i2,2),
+C     *     g456dist(fmpgs1(1,i1,6),fpgs2(1,i2,2))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,5)+fdists2(i2,2))**2
+     *      + g456dist(fmpgs1(1,i1,6),fpgs2(1,i2,2))**2))
+      endif
+C     EF
+      if (fdists1(i1,3)+fdists2(i2,3).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"EF shortcut 1",
+C     *     fdists1(i1,3),fdists2(i2,3),
+C     *     g456dist(fpgs1(1,i1,3),fpgs2(1,i2,3))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,3)+fdists2(i2,3))**2
+     *      + g456dist(fpgs1(1,i1,3),fpgs2(1,i2,3))**2))
+      endif
+      if (fdists1(i1,3)+fdists2(i2,4).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"EF shortcut 2",
+C     *     fdists1(i1,3),fdists2(i2,4),
+C     *     g456dist(fpgs1(1,i1,3),fmpgs2(1,i2,4))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,3)+fdists2(i2,4))**2
+     *      + g456dist(fpgs1(1,i1,3),fmpgs2(1,i2,4))**2))
+      endif
+      if (fdists1(i1,4)+fdists2(i2,3).lt.NCEDIST) then
+C        if (xdebug) then
+C          write(7,*)"EF shortcut 3",
+C     *     fdists1(i1,4),fdists2(i2,3),
+C     *     g456dist(fmpgs1(1,i1,4),fpgs2(1,i2,3))
+C        endif
+        NCEDIST = min(NCEDIST,
+     *    dsqrt((fdists1(i1,4)+fdists2(i2,3))**2
+     *      + g456dist(fmpgs1(1,i1,4),fpgs2(1,i2,3))**2))
+      endif
       enddo
-
-C     Process 8F boundary 
-      if (ip.eq.23) then
-        if (lfc1) then
-          fc1(4) = -fc1(4)
-          if (dabs(fc1(5)).ge.dabs(fc1(6))) then
-            fc1(5) = -fc1(5)
-          else
-            fc1(6) = -fc1(6)
-          endif
-        endif
-        if (lfc2) then
-          fc2(4) = -fc2(4)
-          if (dabs(fc2(5)).ge.dabs(fc2(6))) then
-            fc2(5) = -fc2(5)
-          else
-            fc2(6) = -fc2(6)
-          endif
-        endif
-        pg1(1) = (2.D0*fc1(1)-fc1(5)-fc1(6))/3.D0
-        pg2(1) = (2.D0*fc2(1)-fc2(5)-fc2(6))/3.D0
-        mpg1(1) = pg1(1)
-        mpg2(1) = pg2(1)
-        pg1(2) = (fc1(2)-fc1(4))/2.D0
-        pg2(2) = (fc2(2)-fc2(4))/2.D0
-        mpg1(2) = pg1(2)
-        mpg2(2) = pg2(2)
-        pg1(4) = -pg1(2)
-        pg2(4) = -pg2(2)
-        mpg1(4) = pg1(2)
-        mpg2(4) = pg2(2)
-        pg1(5) = (2.D0*fc1(5)-fc1(1)-fc1(6))/3.D0
-        pg2(5) = (2.D0*fc2(5)-fc2(1)-fc2(6))/3.D0
-        mpg1(5) = (2.D0*fc1(1)-fc1(5)-fc1(6))/3.D0
-        mpg2(5) = (2.D0*fc2(1)-fc2(5)-fc2(6))/3.D0
-        pg1(6) = (2.D0*fc1(6)-fc1(1)-fc1(5))/3.D0
-        pg2(6) = (2.D0*fc2(6)-fc2(1)-fc2(5))/3.D0
-        mpg1(6) = (fc1(1)+fc1(5)-2.D0*fc1(6))/3.D0
-        mpg2(6) = (fc2(1)+fc2(5)-2.D0*fc2(6))/3.D0
-       
-        ht1 = dsqrt(((fc1(2)+fc1(4))**2)/2.D0
-     *+((fc1(1)+fc1(5)+fc1(6))**2)/3.D0)
-        ht2 = dsqrt(((fc2(2)+fc2(4))**2)/2.D0
-     *+((fc2(1)+fc2(5)+fc2(6))**2)/3.D0)
-      go to 1000
-      endif
-
-
-C     Process BF boundary 
-      if (ip.eq.24) then
-        if (lfc1) then
-          fc1(5) = -fc1(5)
-          if (dabs(fc1(4)).ge.dabs(fc1(6))) then
-            fc1(4) = -fc1(4)
-          else
-            fc1(6) = -fc1(6)
-          endif
-        endif
-        if (lfc2) then
-          fc2(5) = -fc2(5)
-          if (dabs(fc2(4)).ge.dabs(fc2(6))) then
-            fc2(4) = -fc2(4)
-          else
-            fc2(6) = -fc2(6)
-          endif
-        endif
-        pg1(2) = (2.D0*fc1(2)-fc1(4)-fc1(6))/3.D0
-        pg2(2) = (2.D0*fc2(2)-fc2(4)-fc2(6))/3.D0
-        mpg1(2) = pg1(2)
-        mpg2(2) = pg2(2)
-        pg1(1) = (fc1(1)-fc1(5))/2.D0
-        pg2(1) = (fc2(1)-fc2(5))/2.D0
-        mpg1(1) = pg1(1)
-        mpg2(1) = pg2(1)
-        pg1(5) = -pg1(1)
-        pg2(5) = -pg2(1)
-        mpg1(5) = pg1(1)
-        mpg2(5) = pg2(1)
-        pg1(4) = (2.D0*fc1(4)-fc1(2)-fc1(6))/3.D0
-        pg2(4) = (2.D0*fc2(4)-fc2(2)-fc2(6))/3.D0
-        mpg1(4) = (2.D0*fc1(2)-fc1(4)-fc1(6))/3.D0
-        mpg2(4) = (2.D0*fc2(2)-fc2(4)-fc2(6))/3.D0
-        pg1(6) = (2.D0*fc1(6)-fc1(2)-fc1(4))/3.D0
-        pg2(6) = (2.D0*fc2(6)-fc2(2)-fc2(4))/3.D0
-        mpg1(6) = (fc1(2)+fc1(4)-2.D0*fc1(6))/3.D0
-        mpg2(6) = (fc2(2)+fc2(4)-2.D0*fc2(6))/3.D0
-       
-        ht1 = dsqrt(((fc1(1)+fc1(5))**2)/2.D0
-     *+((fc1(2)+fc1(4)+fc1(6))**2)/3.D0)
-        ht2 = dsqrt(((fc2(1)+fc2(5))**2)/2.D0
-     *+((fc2(2)+fc2(4)+fc2(6))**2)/3.D0)
-      go to 1000
-      endif
-
-C     Process EF boundary 
-      if (ip.eq.25) then
-        if (lfc1) then
-          fc1(6) = -fc1(6)
-          if (dabs(fc1(5)).ge.dabs(fc1(4))) then
-            fc1(5) = -fc1(5)
-          else
-            fc1(4) = -fc1(4)
-          endif
-        endif
-        if (lfc2) then
-          fc2(6) = -fc2(6)
-          if (dabs(fc2(5)).ge.dabs(fc2(4))) then
-            fc2(5) = -fc2(5)
-          else
-            fc2(4) = -fc2(4)
-          endif
-        endif
-        pg1(2) = (2.D0*fc1(2)-fc1(4)-fc1(5))/3.D0
-        pg2(2) = (2.D0*fc2(2)-fc2(4)-fc2(5))/3.D0
-        mpg1(2) = pg1(2)
-        mpg2(2) = pg2(2)
-        pg1(1) = (fc1(1)-fc1(6))/2.D0
-        pg2(1) = (fc2(1)-fc2(6))/2.D0
-        mpg1(1) = pg1(1)
-        mpg2(1) = pg2(1)
-        pg1(6) = -pg1(1)
-        pg2(6) = -pg2(1)
-        mpg1(6) = pg1(1)
-        mpg2(6) = pg2(1)
-        pg1(4) = (2.D0*fc1(4)-fc1(2)-fc1(5))/3.D0
-        pg2(4) = (2.D0*fc2(4)-fc2(2)-fc2(5))/3.D0
-        mpg1(4) = (2.D0*fc1(2)-fc1(4)-fc1(5))/3.D0
-        mpg2(4) = (2.D0*fc2(2)-fc2(4)-fc2(5))/3.D0
-        pg1(5) = (2.D0*fc1(5)-fc1(2)-fc1(4))/3.D0
-        pg2(5) = (2.D0*fc2(5)-fc2(2)-fc2(4))/3.D0
-        mpg1(5) = (fc1(2)+fc1(4)-2.D0*fc1(5))/3.D0
-        mpg2(5) = (fc2(2)+fc2(4)-2.D0*fc2(5))/3.D0
-       
-        ht1 = dsqrt(((fc1(1)+fc1(6))**2)/2.D0
-     *+((fc1(2)+fc1(4)+fc1(5))**2)/3.D0)
-        ht2 = dsqrt(((fc2(1)+fc2(6))**2)/2.D0
-     *+((fc2(2)+fc2(4)+fc2(5))**2)/3.D0)
-      go to 1000
-      endif
-
-
-      if (ip.eq.7.or.ip.eq.6.or.ip.eq.8) then
-        pg1(6) = GVEC1(6)
-        pg2(6) = GVEC2(6)
-        pg1(2) = (pg1(2)+pg1(4))/2.D0
-        pg1(4) = pg1(2)
-        pg2(2) = (pg2(2)+pg2(4))/2.D0
-        pg2(4) = pg2(2)
-        mpg1(2) = pg1(2)
-        mpg1(4) = pg1(2)
-        mpg2(2) = pg2(2)
-        mpg2(4) = pg2(2)
-        mpg1(6) = pg1(6)
-        mpg2(6) = pg2(6)
-        mpg1(5) = pg1(6)-pg1(5)
-        mpg2(5) = pg2(6)-pg2(5)
-        ht1 = abs(GVEC1(2)-ABS(GVEC1(4)))/SQRT(2.D0)
-        ht2 = abs(GVEC2(2)-ABS(GVEC2(4)))/SQRT(2.D0)
-        if (lfc1) then
-          fc1(4) = -fc1(4)
-          if (dabs(fc1(5)).ge.dabs(fc1(6))) then
-            fc1(5) = -fc1(5)
-          else
-            fc1(6) = -fc1(6)
-          endif
-        endif
-        if (lfc2) then
-          fc2(4) = -fc2(4)
-          if (dabs(fc2(5)).ge.dabs(fc2(6))) then
-            fc2(5) = -fc2(5)
-          else
-            fc2(6) = -fc2(6)
-          endif
-        endif
-        go to 1000
-
-      else if (ip.eq.10.or.ip.eq.9.or.ip.eq.11) then
-        pg1(6) = GVEC1(6)
-        pg2(6) = GVEC2(6)
-        pg1(1) = (pg1(1)+pg1(5))/2.D0
-        pg1(5) = pg1(1)
-        pg2(1) = (pg2(1)+pg2(5))/2.D0
-        pg2(5) = pg2(1)
-        mpg1(1) = pg1(1)
-        mpg1(5) = pg1(1)
-        mpg2(1) = pg2(1)
-        mpg2(5) = pg2(1)
-        mpg1(6) = pg1(6)
-        mpg2(6) = pg2(6)
-        mpg1(4) = pg1(6)-pg1(4)
-        mpg2(4) = pg2(6)-pg2(4)
-        ht1 = abs(GVEC1(1)-ABS(GVEC1(5)))/SQRT(2.D0)
-        ht2 = abs(GVEC2(1)-ABS(GVEC2(5)))/SQRT(2.D0)
-        if (lfc1) then
-          fc1(5) = -fc1(5)
-          if (dabs(fc1(4)).ge.dabs(fc1(6))) then
-            fc1(4) = -fc1(4)
-          else
-            fc1(6) = -fc1(6)
-          endif
-        endif
-        if (lfc2) then
-          fc2(5) = -fc2(5)
-          if (dabs(fc2(4)).ge.dabs(fc2(6))) then
-            fc2(4) = -fc2(4)
-          else
-            fc2(6) = -fc2(6)
-          endif
-        endif
-        go to 1000
-
-      else if (ip.eq.13.or.ip.eq.12.or.ip.eq.14) then
-        pg1(5) = GVEC1(5)
-        pg2(5) = GVEC2(5)
-        pg1(1) = (pg1(1)+pg1(6))/2.D0
-        pg1(6) = pg1(1)
-        pg2(1) = (pg2(1)+pg2(6))/2.D0
-        pg2(6) = pg2(1)
-        mpg1(1) = pg1(1)
-        mpg1(6) = pg1(1)
-        mpg2(1) = pg2(1)
-        mpg2(6) = pg2(1)
-        mpg1(5) = pg1(5)
-        mpg2(5) = pg2(5)
-        mpg1(4) = pg1(5)-pg1(4)
-        mpg2(4) = pg2(5)-pg2(4)
-        ht1 = abs(GVEC1(1)-ABS(GVEC1(6)))/SQRT(2.D0)
-        ht2 = abs(GVEC2(1)-ABS(GVEC2(6)))/SQRT(2.D0)
-        if (lfc1) then
-          fc1(6) = -fc1(6)
-          if (dabs(fc1(5)).ge.dabs(fc1(4))) then
-            fc1(5) = -fc1(5)
-          else
-            fc1(4) = -fc1(4)
-          endif
-        endif
-        if (lfc2) then
-          fc2(6) = -fc2(6)
-          if (dabs(fc2(5)).ge.dabs(fc2(4))) then
-            fc2(5) = -fc2(5)
-          else
-            fc2(4) = -fc2(4)
-          endif
-        endif
-        go to 1000
-
-      else if (ip.eq.15) then
-        bd1 = GVEC1(4)+GVEC1(5)+GVEC1(6)
-        bd2 = GVEC2(4)+GVEC2(5)+GVEC2(6)
-        pg1(1) = .6D0*GVEC1(1)-0.2D0*bd1
-        pg2(1) = .6D0*GVEC2(1)-0.2D0*bd2
-        pg1(2) = pg1(1)
-        pg2(2) = pg2(1)
-        pg1(4) = -0.4D0*GVEC1(1)+GVEC1(4)-0.2D0*bd1
-        pg2(4) = -0.4D0*GVEC2(1)+GVEC2(4)-0.2D0*bd2
-        pg1(5) = -0.4D0*GVEC1(1)+GVEC1(5)-0.2D0*bd1
-        pg2(5) = -0.4D0*GVEC2(1)+GVEC2(5)-0.2D0*bd2
-        pg1(6) = -0.4D0*GVEC1(1)+GVEC1(6)-0.2D0*bd1
-        pg2(6) = -0.4D0*GVEC2(1)+GVEC2(6)-0.2D0*bd2
-        mpg1(1) = pg1(1)
-        mpg2(1) = pg2(1)
-        mpg1(2) = pg1(2)
-        mpg2(2) = pg2(2)
-        mpg1(4) = pg1(5)
-        mpg2(4) = pg2(5)
-        mpg1(5) = pg1(4)
-        mpg2(5) = pg2(4)
-        mpg1(6) = pg1(6)
-        mpg2(6) = pg2(6)
-        ht1 = DistF(gvec1)
-        ht2 = DistF(gvec2)
-      endif
-
- 1000 continue
-      lpg1 = inncone(pg1)
-      lpg2 = inncone(pg2)
-      lmpg1 = inncone(mpg1)
-      lmpg2 = inncone(mpg2)
-
-      if (ht1+ht2 .lt. FOLDxDIST) then
-        dist12 = FOLDxDIST
-        if (lpg1) then
-          if (lpg2)
-     *      dist12=min(dist12,g123dist(pg1,pg2))
-          if (lmpg2)
-     *      dist12=min(dist12,g123dist(pg1,mpg2))
-        endif
-        if (lmpg1) then
-          if (lpg2)
-     *      dist12=min(dist12,g123dist(mpg1,pg2))
-          if (lmpg2)
-     *      dist12=min(dist12,g123dist(mpg1,mpg2))
-        endif
-        FOLDxDIST = MIN(FOLDxDIST,
-     *    DSQRT((ht1+ht2)**2 +
-     *    dist12**2))
-C        if (xdebug)
-C     * write(7,'(a,1x,6f9.2)') "FOLDxDIST: ",FOLDxDIST
-      endif
-
-C      if (xdebug) then
-C          write(7,'(a,1x,6f9.2,1x,l1)')
-C     *      "FOLDxDIST pg1: ",pg1,inncone(pg1)
-C          write(7,'(a,1x,6f9.2,1x,l1)')
-C     *      "FOLDxDIST mpg1: ",mpg1,inncone(mpg1)
-C          write(7,'(a,1x,6f9.2,1x,l1)')
-C     *      "FOLDxDIST pg2: ",pg2,inncone(pg2)
-C          write(7,'(a,1x,6f9.2,1x,l1)')
-C     *      "FOLDxDIST mpg2: ",mpg2,inncone(mpg2)
-C          write(7,'(a,1x,6f9.2)') "FOLDxDIST: ",FOLDxDIST
-C      endif
-        RETURN
+      enddo
+      return
       end
 
