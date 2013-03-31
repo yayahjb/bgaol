@@ -1,6 +1,7 @@
 #ifndef MAKEGAOL_H
 #define MAKEGAOL_H
 
+#define USE_ARMADILLO_LIBRARY
 #define ARMA_DONT_USE_BLAS
 #define ARMA_DONT_USE_LAPACK
 #include <armadillo>
@@ -41,7 +42,6 @@ public:
    double NCDist( const arma::vec6& gv1, const arma::vec6& gv2 );
    static void PrintG6 ( const std::string& text, const arma::vec6& v );
    static void PrintM66_INT ( const std::string& text, const arma::mat66& v );
-   bool Near2Red( const arma::vec6& gvec, const double delta, arma::vec6& vout, double& dist ) const;
    static bool inncone( const arma::vec6& gvec );
    void BDCoord( const arma::vec6& gvec, arma::vec6& xs, arma::vec6& ys );
 
@@ -51,7 +51,7 @@ private: // member data
 private: // functions
    bool GoodSeed( const int i );
    void GenSeeds( const arma::vec6& gred, const arma::vec6& g6ErrorBox, arma::vec6 seeds[], double seeddist[], bool goodseed[] ) const;
-   arma::mat66 MKPerp ( const arma::mat66& prj );
+   static arma::mat66 MKPerp ( const arma::mat66& prj );
    double DistF( const arma::vec6& g ) const;
    double FoldMDist( const arma::vec6& gvec1, const arma::vec6& gvec2, const int ip, const double cFoldDist ) const;
    double FoldxDist( const arma::vec6& gvec1, const arma::vec6& gvec2, const int ip, const double cFoldDist,

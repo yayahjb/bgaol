@@ -32,16 +32,18 @@ private:
 class Reducer
 {
 public:
-   Reducer(void);
-   ~Reducer(void);
-
    static bool Reduce( const arma::vec6& vi, arma::mat66& m, arma::vec6& vout, const double delta );
    static bool NearRed( const arma::vec6& gvec, const double delta );
    static bool Near2Red( const arma::vec6& gvec, const double delta, arma::vec6& vout, double& dist );
-   static void Reporter( const std::string& text, const arma::vec6& vin, const arma::vec6& vout, const arma::mat66& m );
 
 private:
    static void MKnorm( const arma::vec6& vi, arma::mat66& m, arma::vec6& vout, const double delta  );
+   static void Reporter( const std::string& text, const arma::vec6& vin, const arma::vec6& vout, const arma::mat66& m );
+
+   // at least for now, all functions are static, and there is no member data
+   // forbid constructor and destructor
+   Reducer(void);
+   ~Reducer(void);
 
 public:
 

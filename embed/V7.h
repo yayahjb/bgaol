@@ -1,6 +1,8 @@
 #ifndef V7_H
 #define V7_H
 
+#define ARMA_DONT_USE_BLAS
+#define ARMA_DONT_USE_LAPACK
 #include <armadillo>
 #include "Cell.h"
 

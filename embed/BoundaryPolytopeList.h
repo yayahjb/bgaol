@@ -18,7 +18,7 @@ class BoundaryPolytopeList
    from the intersections of the primary boundaries. 
 
    BoundaryPolytopeList(void)                         == constructor that initializes the list of Boundary polytopes
-   int size( void ) const                             == returns the number of items in the List
+   size_t size( void ) const                             == returns the number of items in the List
    const BoundaryPolytope& operator[] ( const int n ) == returns the n-th item in the list
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 */
@@ -32,7 +32,8 @@ public:
    const BoundaryPolytope& operator[] ( const int n ) const;
  //      BoundaryPolytope& operator[] ( const int n ); // do NOT implement assignment
    int DegreesofFreedom( const int ITDESG );
-   int size( void ) const { return( m_list.size() ); }
+   size_t size( void ) const { return( m_list.size() ); }
+   std::vector<BoundaryPolytope> Distances( const double filter, const arma::vec6& v ) const;
 
 private: // member data
    std::vector<BoundaryPolytope> m_list;

@@ -10,7 +10,7 @@ class BoundaryPolytopeList
    from the intersections of the primary boundaries. 
 
    BoundaryPolytopeList(void)                         == constructor that initializes the list of Boundary polytopes
-   int size( void ) const                             == returns the number of items in the List
+   size_t size( void ) const                             == returns the number of items in the List
    const BoundaryPolytope& operator[] ( const int n ) == returns the n-th item in the list
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 */
@@ -181,9 +181,26 @@ BoundaryPolytopeList::~BoundaryPolytopeList( void )
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 const BoundaryPolytope& BoundaryPolytopeList::operator[] ( const int n ) const
 {
-   int nn = n;
+   unsigned int nn = n;
    if ( n < 0 || n > size()-1 ) nn = 0;
    return( m_list[nn] ); 
+}
+
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+// Name: Distances[]()
+// Description: Returns a vector containing BoundaryPolytopes that are within
+//              the filter distance from the probe vector
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+std::vector<BoundaryPolytope> BoundaryPolytopeList::Distances( const double filter, const arma::vec6& v ) const
+{
+   std::vector<BoundaryPolytope> polytopes;
+   for ( unsigned int i=0; i<m_list.size( ); ++i )
+   {
+      const double dist = m_list[i].Distance( v );
+      if ( dist <= filter ) polytopes.push_back( m_list[i] );
+   }
+
+   return( polytopes );
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/

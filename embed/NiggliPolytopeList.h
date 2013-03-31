@@ -20,7 +20,7 @@ Description: initializes the 44 Niggli lattice types. There are 45 entries
              the entries are integer values.
 
    NiggliPolytopeList(void)                         == constructor that initializes the list of Niggli polytopes
-   int size( void ) const                           == returns the number of items in the List
+   size_t size( void ) const                           == returns the number of items in the List
    const NiggliPolytope& operator[] ( const int n ) == returns the n-th item in the list
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 */
@@ -30,7 +30,7 @@ class NiggliPolytopeList
 public:
    NiggliPolytopeList(void);
    ~NiggliPolytopeList(void);
-   int size( void ) const { return( m_list.size( ) ); };
+   size_t size( void ) const { return( m_list.size( ) ); };
    const NiggliPolytope& operator[] ( const int n ) const;
 
 private: // member data

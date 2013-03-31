@@ -27,9 +27,9 @@ V7::V7( const arma::vec7& v7 )
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 V7::V7( const arma::vec6& v )
 {
-   m_v7[0] = v[0];
-   m_v7[1] = v[1];
-   m_v7[2] = v[2];
+    m_v7[0] = std::sqrt(v[0]);
+    m_v7[1] = std::sqrt(v[1]);
+    m_v7[2] = std::sqrt(v[2]);
 
    const Cell c( v );
    const Cell cI( c.Inverse( ) );
@@ -41,11 +41,11 @@ V7::V7( const arma::vec6& v )
    Reducer::Reduce( vinverse, m, reducedBase, 0.0 );
 
 
-   m_v7[3] = 1.0/reducedBase[0];
-   m_v7[4] = 1.0/reducedBase[1];
-   m_v7[5] = 1.0/reducedBase[2];
+    m_v7[3] = std::sqrt(1.0/reducedBase[0]);
+    m_v7[4] = std::sqrt(1.0/reducedBase[1]);
+    m_v7[5] = std::sqrt(1.0/reducedBase[2]);
 
-   m_v7[6] = pow( c.Volume( ), 2.0/3.0 );
+   m_v7[6] = pow( c.Volume( ), 1.0/3.0 );
 }
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/

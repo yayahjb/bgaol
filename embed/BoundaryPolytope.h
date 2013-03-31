@@ -47,6 +47,7 @@ public:
    std::string GetSubspace   ( void ) const { return( m_subspace ); }
    std::string GetDescription( void ) const { return( m_description ); }
    int DegreesofFreedom( const int ITDESG );
+   double Distance( const arma::vec6& v ) const;
 
 private: // member data
    arma::mat66 m_projector;   //    projector onto the boundary

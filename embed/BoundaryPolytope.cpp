@@ -75,3 +75,11 @@ int BoundaryPolytope::DegreesofFreedom( const int ITDESG )
    return( idf[std::max(1,std::min(abs(ITDESG),44))] );                            
 }
 
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+// Name: Distance[]()
+// Description: Returns the distance of a G6 vector from the polytope
+/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+double BoundaryPolytope::Distance( const arma::vec6& v ) const
+{
+   return( arma::norm( m_projector * v, 2 ) );
+}
