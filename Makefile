@@ -35,6 +35,10 @@ CGIBIN		?=	$(HOME)/public_html/cgi-bin
 #  cgi-bin script bgaol.csh
 CGIBINEXT	?=	/cgi-bin
 #
+#  CGIMETHOD is either GET or POST
+#
+CGIMETHOD	?=	POST
+#
 #  HTDOCS is the installation directory for the HTML document
 #  bgaol.html
 HTDOCS		?=	$(HOME)/public_html/bgaol
@@ -82,7 +86,9 @@ HTFLAGS 	=	-DCGIBIN=$(CGIPATH) \
 		-DHTTPDSERVER=$(HTTPDSERVER) \
 		-DMATHSCRIBEURL=$(MATHSCRIBEURL) \
 		-DBGAOLTARBALLURL=$(BGAOLTARBALLURL) \
-		-DBGAOLZIPURL=$(BGAOLZIPURL)
+		-DBGAOLZIPURL=$(BGAOLZIPURL) \
+		-DCGIMETHOD=$(CGIMETHOD) \
+		-DHTDOCS=$(HTDOCS)
 		
 
 
@@ -101,6 +107,7 @@ edit:
 		@/bin/echo "BINDEST -------- currently:" $(BINDEST)
 		@/bin/echo "HTDOCS  -------- currently:" $(HTDOCS)
 		@/bin/echo "CGIPATH  ------- currently:" $(CGIPATH)
+		@/bin/echo "CGIMETHOD ------ currently:" $(CGIMETHOD)
 		@/bin/echo "FC  ------------ currently:" $(FC)
 		@/bin/echo "FFLAGS  -------- currently:" $(FFLAGS)
 		@/bin/echo ""
@@ -144,6 +151,8 @@ bgaol.csh:	bgaol.csh.m4 Makefile
 		m4 -DSEARCHURL=$(SEARCHURL) \
 		-DBINPATH=$(BINPATH) \
 		-DSEARCHURL=$(SEARCHURL)\
+		-DCGIMETHOD=$(CGIMETHOD)\
+		-DHTDOCS=$(HTDOCS)\
 		< bgaol.csh.m4 > bgaol.csh
 #
 install:	edit_done bgaol bgaol.csh follower/Follower bgaol.html \

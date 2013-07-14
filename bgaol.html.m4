@@ -127,7 +127,7 @@ WWW <b>G<sup>6</sup></b> Bravais Lattice Determination
 <br /> Lawrence C. Andrews, Micro Encoder Inc.,
 <br />Herbert J. Bernstein, Bernstein+Sons,
 <A HREF=mailto:yaya@bernstein-plus-sons.com>yaya@bernstein-plus-sons.com</A>
-<FORM method=POST ACTION="'CGIBIN()`/bgaol.csh">
+<FORM method='CGIMETHOD()` ACTION="'CGIBIN()`/bgaol.csh">
 <br />
 A program to determine cells &quot;close&quot; to given cell to help find the Bravais 
 lattice of highest symmetry consistent with the submitted cell.

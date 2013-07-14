@@ -27,7 +27,7 @@ echo "<title>Bravais General Identification of Lattices (BGAOL)"
 echo "</title>"
 echo "</head>"
 echo ''`<body><font face="Arial,Helvetica,Times">''`
-tr ''`\&''` ''`\n''`  |sed "s/^./set &/" | sed "s/%2B/+/g" > /tmp/outstr$$
+'ifelse(CGIMETHOD(),`GET',`echo $QUERY_STRING |')` tr ''`\&''` ''`\n''`  |sed "s/^./set &/" | sed "s/%2B/+/g" > /tmp/outstr$$
 #cat /tmp/outstr$$
 source /tmp/outstr$$
 rm /tmp/outstr$$
