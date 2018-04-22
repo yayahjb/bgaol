@@ -360,7 +360,7 @@ C         WRITE (*,*) ' AFTER MKPRIM'
            GO TO 6000
          ENDIF
 
-         IF (HTMLOUT) WRITE(*,*),"</pre>",
+         IF (HTMLOUT) WRITE(*,*) "</pre>",
      *   '<div style='//
      *   '"width:600px;height:160px;overflow:'//
      *   'scroll;border:2px solid #0000FF;">',
@@ -520,7 +520,7 @@ C              write(*,*)"DCURR, VDIST",IV,DCURR,VDIST(IV)
 
  4000    CONTINUE
 
-         IF (HTMLOUT) WRITE(*,*),"<a name=results></pre></div><pre>"
+         IF (HTMLOUT) WRITE(*,*) "<a name=results></pre></div><pre>"
 
       call SortDists(NPROJ, BEST, ITDESG, IORD, ERRSIZ)
       if (modef.eq.1)
