@@ -10,5 +10,5 @@ FFLAGS="-O3"; export FFLAGS
 CGIBINEXT=/cgi-bin; export CGIBINEXT
 CGIMETHOD=POST; export CGIMETHOD
 HTDOCS=/var/www/html/bgaol; export HTDOCS
-HTDOCSEXT=/bgaol; export HTDOCS
+HTDOCSEXT=/bgaol; export HTDOCSEXT
 
