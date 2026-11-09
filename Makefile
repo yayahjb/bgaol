@@ -155,7 +155,7 @@ bgaol.csh:	bgaol.csh.m4 Makefile
 		-DHTDOCS=$(HTDOCS)\
 		< bgaol.csh.m4 > bgaol.csh
 #
-install:	edit_done bgaol bgaol.csh follower/Follower bgaol.html \
+install:	edit_done bgaol bgaol.csh bgaol.html \
 		$(MATHSCRIBEPATH)
 		-mkdir -p $(BINDEST)
 		-mkdir -p $(CGIBIN)
@@ -163,8 +163,8 @@ install:	edit_done bgaol bgaol.csh follower/Follower bgaol.html \
 		chmod 755 bgaol
 		chmod 755 bgaol.csh
 		cp bgaol $(BINDEST)
-		chmod 755 follower/Follower
-		cp follower/Follower $(BINDEST)
+		#chmod 755 follower/Follower
+		#cp follower/Follower $(BINDEST)
 		cp bgaol.csh $(CGIBIN)
 		chmod 755 $(CGIBIN)/bgaol.csh
 		cp bgaol.html $(HTDOCS)

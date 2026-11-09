@@ -459,7 +459,7 @@ C**********************************************************************C
       integer im
       common /xdebug/xdebug
       logical xdebug
-      logical OKCELL, REDUCE, bTest,quiet
+      logical OKCELL, reduce, bTest,quiet
       real*8 cell(6)
       integer icell
       integer nbuffer
@@ -545,7 +545,7 @@ C      write(*,*) "vran ",vran
 C      write(*,"(a,6F10.5)") "v3 ",v3
 
       ncycle = -1
-      bTest = reduce (v3, imred1,rv2, 0.0D0, 'REDUCE  ')
+      bTest = reduce (v3, imred1,rv2, 0.0D0, 'reduce  ')
       write(*,"(10x,6i3)" ) imred1
       write(*,*)
       do i=1,36
@@ -625,7 +625,7 @@ C            if (ID .eq. 185) then
                cell(icell) = vtemp(icell)
  7600       continue
             if ( OKCELL( "V", cell, .true. ) ) then
-            if ( reduce (vtemp, imred1,rvtemp, 0.0D0, 'REDUCE  '))then
+            if ( reduce (vtemp, imred1,rvtemp, 0.0D0, 'reduce  '))then
 
             distance(i) = NCDIST( rvtemp, rv2 )
 

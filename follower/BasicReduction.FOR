@@ -629,42 +629,42 @@ C now loop thru all the vectors
             if ( ip .eq.  6 .and. v(5,iv) .le. v(6,iv)
      *         .and. v(5,iv) .gt. 0.D0) then
                if (boundary67 .lt. ERRSIZ*3.5D0 .or. DEBUG) then
-               write(*,"(a,Z2,4x,g10.5)") "BOUNDARY67",ip,boundary67
+               write(*,"(a,Z2,4x,g12.5)") "BOUNDARY67",ip,boundary67
                endif
                distances2Boundaries(ip) = boundary67
             elseif ( ip .eq.  7 .and. v(5,iv) .ge. v(6,iv)
      *         .and. v(6,iv) .gt. 0.D0) then
                if (boundary67 .lt. ERRSIZ*3.5D0 .or. DEBUG) then
-               write(*,"(a,Z2,4x,g10.5)") "BOUNDARY67",ip,boundary67
+               write(*,"(a,Z2,4x,g12.5)") "BOUNDARY67",ip,boundary67
                endif
                distances2Boundaries(ip) = boundary67
             elseif ( ip .eq.  9 .and. v(4,iv) .le. v(6,iv)
      *         .and. v(4,iv) .gt. 0.D0 ) then
                if (boundary9A .lt. ERRSIZ*3.5D0 .or. DEBUG) then
-               write(*,"(a,Z2,4x,g10.5)") "BOUNDARY9A",ip,boundary9A
+               write(*,"(a,Z2,4x,g12.5)") "BOUNDARY9A",ip,boundary9A
                endif
                distances2Boundaries(ip) = boundary9A
             elseif ( ip .eq. 10 .and. v(4,iv) .ge. v(6,iv)
      *          .and. v(6,iv) .gt. 0.D0 ) then
                if (boundary9A .lt. ERRSIZ*3.5D0 .or. DEBUG) then
-               write(*,"(a,Z2,4x,g10.5)") "BOUNDARY9A",ip,boundary9A
+               write(*,"(a,Z2,4x,g12.5)") "BOUNDARY9A",ip,boundary9A
                endif
                distances2Boundaries(ip) = boundary9A
             elseif ( ip .eq. 12 .and. v(4,iv) .le. v(5,iv)
      *         .and. v(4,iv) .gt. 0.D0 ) then
                if (boundaryCD .lt. ERRSIZ*3.5D0 .or. DEBUG) then
-               write(*,"(a,Z2,4x,g10.5)") "BOUNDARYCD",ip,boundaryCD
+               write(*,"(a,Z2,4x,g12.5)") "BOUNDARYCD",ip,boundaryCD
                endif
                distances2Boundaries(ip) = boundaryCD
             elseif ( ip .eq. 13 .and. v(4,iv) .ge. v(5,iv)
      *         .and. v(5,iv) .gt. 0.D0 ) then
                if (boundaryCD .lt. ERRSIZ*3.5D0 .or. DEBUG) then
-               write(*,"(a,Z2,4x,g10.5)") "BOUNDARYCD",ip,boundaryCD
+               write(*,"(a,Z2,4x,g12.5)") "BOUNDARYCD",ip,boundaryCD
                endif
                distances2Boundaries(ip) = boundaryCD
             else
                if (a .lt. ERRSIZ*3.5D0 .or. DEBUG) then
-               write(*,"(a,a,1X,Z2,4x,g10.5)")
+               write(*,"(a,a,1X,Z2,4x,g12.5)")
      *         "BOUNDARY", XCONE, ip, a
                endif
                distances2Boundaries(ip) = a
@@ -840,13 +840,13 @@ C----------------------------------------------------------------------C
          if (bigc) then
            if (bigcerr) then
              IF (CXE(I) .GT. 0.0) THEN
-               WRITE (*,'(1X,G12.3,2X,G9.3)') CX(I),CXE(I)
+               WRITE (*,'(1X,G12.3,2X,G10.3)') CX(I),CXE(I)
              ELSE
                WRITE (*,'(1X,G12.3)') CX(I)
              ENDIF
            else
              IF (CXE(I) .GT. 0.0) THEN
-               WRITE (*,'(1X,G12.3,2X,F9.3)') CX(I),CXE(I)
+               WRITE (*,'(1X,G12.3,2X,F10.3)') CX(I),CXE(I)
              ELSE
                WRITE (*,'(1X,G12.3)') CX(I)
              ENDIF
@@ -854,13 +854,13 @@ C----------------------------------------------------------------------C
          else
            if (bigcerr) then
              IF (CXE(I) .GT. 0.0) THEN
-               WRITE (*,'(1X,F12.3,2X,G9.3)') CX(I),CXE(I)
+               WRITE (*,'(1X,F12.3,2X,G10.3)') CX(I),CXE(I)
              ELSE
                WRITE (*,'(1X,F12.3)') CX(I)
              ENDIF
            else
              IF (CE(I) .GT. 0.0) THEN
-               WRITE (*,'(1X,F12.3,2X,F9.3)') CX(I),CXE(I)
+               WRITE (*,'(1X,F12.3,2X,F10.3)') CX(I),CXE(I)
              ELSE
                WRITE (*,'(1X,F12.3)') CX(I)
              ENDIF

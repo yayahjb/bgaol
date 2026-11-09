@@ -124,9 +124,9 @@ WWW <b>G<sup>6</sup></b> Bravais Lattice Determination
 <center>
 <H2> <b>G<sup>6</sup></b> Bravais General Analysis of Lattices (BGAOL)</H2>
 <br /> by
-<br /> Lawrence C. Andrews, Micro Encoder Inc.,
-<br />Herbert J. Bernstein, Bernstein+Sons,
-<A HREF=mailto:yaya@bernstein-plus-sons.com>yaya@bernstein-plus-sons.com</A>
+<br /> Lawrence C. Andrews,
+<br />Herbert J. Bernstein,
+<A HREF=mailto:yayahjb@gmail.com>yayahjb@gmail.com</A>
 <FORM method='CGIMETHOD()` ACTION="'CGIBIN()`/bgaol.csh">
 <br />
 A program to determine cells &quot;close&quot; to given cell to help find the Bravais 
@@ -576,7 +576,7 @@ determination of a unique conventional cell. Zeitschrift fu r Kristallographie, 
 </center>
 
 <hr>
-Updated 21 July 2012.
+Updated 09 November 2026.
 </font>
 </body>
 </html>
